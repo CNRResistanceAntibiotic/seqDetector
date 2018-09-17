@@ -8,13 +8,13 @@ from setuptools import setup, find_packages
 import glob
 
 setup(
-    name='seqassembler',
+    name='seqdetector',
     version='1.0.1',
-    description='seqassembler: pipeline CNR Resistance for assembl genomes',
+    description='seqdetector: pipeline CNR Resistance for detection',
     packages=find_packages(),
     author='Richard Bonnet',
     author_email='rbonnet@chu-clermontferrand.fr',
-    url='https://github.com/CNRResistanceAntibiotic/seqAssembler',
+    url='https://github.com/CNRResistanceAntibiotic/seqDetector',
     scripts=glob.glob('scripts/*'),
     install_requires=['', 'numpy', 'pandas'],
     license='GPLv3',
