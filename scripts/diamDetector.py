@@ -890,8 +890,10 @@ def main(args):
             out_dir = os.path.join(os.path.dirname(query_file), 'Detected_sequences')
             if not os.path.exists(out_dir):
                 os.mkdir(out_dir)
+            print("\nStart to write gbk\n")
             # Write the sequences as gbk and fasta files
             write_gbk(merged_results, query_dic, out_dir, out_prefix)
+            print("\nStart to write fasta\n")
             write_fasta(merged_results, out_dir, out_prefix)
         else:
             print('\nNo results!\n')
