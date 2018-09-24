@@ -3,6 +3,8 @@ import os
 import re
 import argparse
 from collections import OrderedDict
+from subprocess import Popen, PIPE, STDOUT
+
 import numpy as np
 import pandas as pd
 
@@ -46,8 +48,8 @@ def bam_count(bam_file, fasta_ref, output_dir, q=0, b=0, feature_name='', site_f
                                                                                       bam_file, out_file)
 
     if not os.path.exists(out_file) or force:
-        # print(cmd)
-        os.system(cmd)
+        process = Popen(cmd, shell=True, stdout=PIPE, stderr=STDOUT).stdout.read()
+        log_info = "Command line executed: {0}\n\n\n{1}".format(cmd, process.decode("utf-8"))
     else:
         print('\nRead count file {0} already done.\n'.format(out_file))
     return out_file

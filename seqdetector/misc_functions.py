@@ -11,7 +11,6 @@ from Bio.Seq import Seq
 from Bio.SeqRecord import SeqRecord
 
 
-
 def load_fasta(fasta_file, fmt='fasta'):
     fasta_dic = {}
     with open(fasta_file) as fasta:
@@ -58,12 +57,11 @@ def evaluate_dna_alg(seq, ref_seq):
 
 
 def read_bam_stat(filename):
-    with open(filename) as inf_f:
-        header = inf_f.readline()
-        for line in inf_f:
-            pass
-        result = dict(zip(header.strip().split('\t'), line.strip().split('\t')))
-    return result
+    with open(filename) as tsv_file:
+        reader = csv.DictReader(tsv_file, delimiter='\t')
+        for row in reader:
+            if row["ID"] == "Overall":
+                return row
 
 
 def make_dmnd_database(fasta_file, force=False, threads=8):
@@ -71,7 +69,8 @@ def make_dmnd_database(fasta_file, force=False, threads=8):
     if os.path.exists(dmnd_db + ".dmnd") and not force:
         print('\nDatabase {0} already exists'.format(dmnd_db))
     else:
-        subprocess.check_call('$(which diamond) makedb -p {0} --in {1} -d {2}'.format(threads, fasta_file, dmnd_db), shell=True)
+        subprocess.check_call('$(which diamond) makedb -p {0} --in {1} -d {2}'.format(threads, fasta_file, dmnd_db),
+                              shell=True)
     return dmnd_db
 
 
@@ -318,14 +317,14 @@ def extract_substitutions(data):
 
             if query == 'd' and pre_query == 'd' and pos == pre_pos + 1:
                 unclassified_subs[open_deletion_index]['t_aa'] = unclassified_subs[open_deletion_index]['t_aa'] + \
-                                                               unclassified_subs[n]['t_aa']
+                                                                 unclassified_subs[n]['t_aa']
                 index_dels.append(n)
             elif query == 'd':
                 open_deletion_index = n
 
             if target == 'i' and pre_target == 'i' and pos == pre_pos + 1:
                 unclassified_subs[open_insertion_index]['q_aa'] = unclassified_subs[open_insertion_index]['q_aa'] + \
-                                                                unclassified_subs[n]['q_aa']
+                                                                  unclassified_subs[n]['q_aa']
                 index_dels.append(n)
             elif target == 'i':
                 open_insertion_index = n
@@ -370,13 +369,13 @@ def extract_substitutions(data):
 
 def reverse_complement(dna_seq):
     cpl_dic = {'-': '-', 'N': 'N',
-              'A': 'T', 'T': 'A',
-              'C': 'G', 'G': 'C',
-              'S': 'S', 'W': 'W',
-              'D': 'H', 'H': 'D',
-              'K': 'M', 'M': 'K',
-              'Y': 'R', 'R': 'Y',
-              'B': 'V', 'V': 'B'}
+               'A': 'T', 'T': 'A',
+               'C': 'G', 'G': 'C',
+               'S': 'S', 'W': 'W',
+               'D': 'H', 'H': 'D',
+               'K': 'M', 'M': 'K',
+               'Y': 'R', 'R': 'Y',
+               'B': 'V', 'V': 'B'}
     dna_seq = list(str(dna_seq).upper())
     size = len(dna_seq)
     rev_cplt = []
@@ -391,16 +390,16 @@ def dna_global_alignemnt(blastn_results, queryDic, targetDic):
         tseq = data['tseq']
         qseq = data['qseq']
         full_tseq = targetDic[data['tid']].seq
-        if str(full_tseq) != str(tseq).replace('-',''):
+        if str(full_tseq) != str(tseq).replace('-', ''):
             full_qseq = queryDic[data['qid']].seq
-            if data['strand'] > 0 :
+            if data['strand'] > 0:
                 qstart = data['qstart'] - (data['tstart'] - 1)
-                qend   = data['qend']   + (data['tlen'] - data['tend'])
+                qend = data['qend'] + (data['tlen'] - data['tend'])
                 if qstart < 1:
-                    data['qseq'] = '-' * (abs(qstart)+1) + full_qseq[0:data['qstart']-1] + data['qseq']
+                    data['qseq'] = '-' * (abs(qstart) + 1) + full_qseq[0:data['qstart'] - 1] + data['qseq']
                     data['qstart'] = 1
                 else:
-                    data['qseq'] = full_qseq[qstart-1:data['qstart']-1] + data['qseq']
+                    data['qseq'] = full_qseq[qstart - 1:data['qstart'] - 1] + data['qseq']
                     data['qstart'] = qstart
 
                 if qend > len(full_qseq):
@@ -413,21 +412,23 @@ def dna_global_alignemnt(blastn_results, queryDic, targetDic):
                 qstart = data['qstart'] - (data['tlen'] - data['tend'])
                 qend = data['qend'] + data['tstart'] - 1
                 if qstart < 1:
-                    data['qseq'] = data['qseq'] + reverse_complement(full_qseq[0:data['qstart']-1]) + '-' * (abs(qstart)+1)
+                    data['qseq'] = data['qseq'] + reverse_complement(full_qseq[0:data['qstart'] - 1]) + '-' * (
+                                abs(qstart) + 1)
                     data['qstart'] = 1
                 else:
-                    data['qseq'] = data['qseq'] + reverse_complement(full_qseq[qstart-1:data['qstart']-1])
+                    data['qseq'] = data['qseq'] + reverse_complement(full_qseq[qstart - 1:data['qstart'] - 1])
                     data['qstart'] = qstart
 
                 if qend > len(full_qseq):
-                    data['qseq'] = '-' * (qend - len(full_qseq)) + reverse_complement(full_qseq[data['qend']:]) + data['qseq']
+                    data['qseq'] = '-' * (qend - len(full_qseq)) + reverse_complement(full_qseq[data['qend']:]) + data[
+                        'qseq']
                     data['qend'] = len(full_qseq)
                 else:
                     data['qseq'] = reverse_complement(full_qseq[data['qend']:qend]) + data['qseq']
                     data['qend'] = qend
             data['tseq'] = full_tseq[0:data['tstart'] - 1] + data['tseq'] + full_tseq[data['tend']:]
             data['tstart'] = 1
-            data['tend']   = len(full_tseq)
+            data['tend'] = len(full_tseq)
             d = evaluate_dna_alg(str(data['qseq']), str(data['tseq']))
             data['pid'] = d['pid']
             data['nid'] = d['nid']
@@ -528,10 +529,10 @@ def read_bam_count(filename, depth_pass=20, qual_pass=20, fraction_pass=0.8):
         alarm = []
         # for n, line in enumerate(inf_f):
         for row in reader:
-            #line = line.strip().split('\t')
-            #if n == 0:
+            # line = line.strip().split('\t')
+            # if n == 0:
             #    header = line
-            #else:
+            # else:
 
             ctg = row['ID']
             position = row['position']
@@ -560,5 +561,3 @@ def read_bam_count(filename, depth_pass=20, qual_pass=20, fraction_pass=0.8):
             else:
                 result[ctg][position] = row
     return result, ';'.join(alarm)
-
-

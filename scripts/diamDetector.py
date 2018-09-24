@@ -237,9 +237,6 @@ def extract_mutations(data):
     return data
 
 
-
-
-
 def show_cds_result(dmnd_results):
     for data in dmnd_results:
         print('\nTarget: {0}\ttarget length: {1}\tstart: {2}\tend: {3}'.format(data['tid'], data['tlen'],
@@ -251,13 +248,15 @@ def show_cds_result(dmnd_results):
         if data['strand'] > 0:
             try:
                 print('Detected: {0}'.format(str(Seq(data['qseq']).translate(table='Bacterial', cds=True))))
-            except:
+            except Exception as e:
+                print(e)
                 print('Detected: {0}'.format(str(Seq(data['qseq']).translate(table='Bacterial', cds=False))))
         else:
             try:
                 print('Detected: {0}'.format(
                     str(Seq(data['qseq']).reverse_complement().translate(table='Bacterial', cds=True))))
-            except:
+            except Exception as e:
+                print(e)
                 print('Detected: {0}'.format(
                     str(Seq(data['qseq']).reverse_complement().translate(table='Bacterial', cds=False))))
         if 'qprot' and 'tprot' in data:
@@ -473,7 +472,8 @@ def write_csv_html(dmnd_results, mut_prefix, id_prefix, pass_alarm_qual=20, pass
                                             if int(depth_ref) < pass_alarm_depth:
                                                 depth_alarm = 'depth<{0}'.format(pass_alarm_depth)
                                                 break
-                                        except:
+                                        except Exception as e:
+                                            print(e)
                                             depth_alarm = 'depth_trbl'
                                             break
 
@@ -486,7 +486,8 @@ def write_csv_html(dmnd_results, mut_prefix, id_prefix, pass_alarm_qual=20, pass
                                             if frac < pass_alarm_frac:
                                                 frac_alarm = 'frac<{0}'.format(pass_alarm_frac)
                                                 break
-                                        except:
+                                        except Exception as e:
+                                            print(e)
                                             frac_alarm = 'frac_trbl'
                                             break
 
@@ -497,7 +498,8 @@ def write_csv_html(dmnd_results, mut_prefix, id_prefix, pass_alarm_qual=20, pass
                                             if float(qual) < pass_alarm_qual:
                                                 qual_alarm = 'qual<{0}'.format(pass_alarm_qual)
                                                 break
-                                        except:
+                                        except Exception as e:
+                                            print(e)
                                             qual_alarm = 'qual_trbl'
                                             break
 
@@ -869,7 +871,7 @@ def main(args):
             target_dic = load_fasta(dna_target_file)
             blastn_results = dna_global_alignemnt(blastn_results, query_dic, target_dic)
             if os.path.exists(bam_file):
-                # Extaction quality of bases and sequencing depth if bam detected
+                # Extraction quality of bases and sequencing depth if bam detected
                 blastn_results = dna_extract_quality_and_depth(bam_file, query_file, blastn_results, out_prefix, force)
             # Show the detected DNA features
             show_dna_result(blastn_results)
