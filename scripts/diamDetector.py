@@ -834,21 +834,25 @@ def main(args):
             blastn_results = []
 
         # Filter the DNA and CDS features on the bases of taxonomy and overlaps
-        print('\nNumber of detected features: {}'.format(len(dmnd_results) + len(blastn_results)))
+        print('\nNumber of detected features: {0}'.format(len(dmnd_results) + len(blastn_results)))
         if taxonomy_filter_detect == 'strict' and taxonomy != '':
             dmnd_results = taxonomy_filter_detect(dmnd_results, taxonomy)
             blastn_results = taxonomy_filter_detect(blastn_results, taxonomy)
-            print('Number of detected features after stric taxonomic filtering: {}'.format(
+            print('Number of detected features after stric taxonomic filtering: {0}'.format(
                 len(dmnd_results) + len(blastn_results)))
         if taxonomy_filter_detect == 'lax':
             dmnd_results = overlap_filter(dmnd_results, taxonomy, pass_overlap)
+            print('\nNumber of detected features after lax taxonomic and overlap filtering: {0} \n'.format(
+                len(dmnd_results)))
             blastn_results = overlap_filter(blastn_results, taxonomy, pass_overlap)
-            print('Number of detected features after lax taxonomic and overlap filtering: {}'.format(
-                len(dmnd_results) + len(blastn_results)))
+            print('\nNumber of detected features after lax taxonomic and overlap filtering: {0}'
+                  .format(len(blastn_results)))
+            print('\n######## Number of detected features after lax taxonomic and overlap filtering: {0} ########'
+                .format(len(dmnd_results) + len(blastn_results)))
         else:
             dmnd_results = overlap_filter(dmnd_results, '', pass_overlap)
             blastn_results = overlap_filter(blastn_results, '', pass_overlap)
-            print('Number of detected features after overlap filtering: {}'.format(
+            print('Number of detected features after overlap filtering: {0}'.format(
                 len(dmnd_results) + len(blastn_results)))
 
         print('')

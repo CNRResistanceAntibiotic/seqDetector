@@ -26,7 +26,7 @@ def run_blastn(blastn_db, query_file, pass_pid=70, force=True, evalue=0.0001, th
               'gapopen gaps qseq sseq\"'
         cmd = '$(which blastn) -out {0} -outfmt {1} -query {2} -db {3} -num_threads {4} -perc_identity {5} -evalue {6}' \
             .format(out_file, fmt, query_file, blastn_db, threads, pass_pid, evalue)
-        # print cmd
+        print(cmd)
         os.system(cmd)
     return out_file
 
@@ -85,6 +85,7 @@ def load_blastn_result(result_file, target_file, pass_pid=70, pass_pcv=70):
             for item in ['pid', 'ppos']:
                 data[item] = round(float(data[item]), 2)
             data['pcv'] = round(100 * len(data['qseq'].replace('-', '')) / float(len(target_dic[t_id].seq)), 2)
+
             if data['pcv'] >= pass_pcv and data['pid'] >= pass_pid:
                 blastn_results.append(data)
     return blastn_results
