@@ -720,6 +720,9 @@ def write_gbk(results, query_dic, out_dir, out_prefix):
 
 
 def main(args):
+
+    print("Version diamDetector: {0}\n".format(version()))
+
     wk_dir = args.wkdir
 
     # Check working directory
