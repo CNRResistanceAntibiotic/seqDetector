@@ -30,7 +30,7 @@ def run_diam(dmnd_db, query_file, pass_pid=70, pass_pcv=70, threads=8, force=Tru
         fmt = '6 qseqid qframe sseqid slen qstart qend sstart send length pident nident ppos positive mismatch ' \
               'gapopen gaps qseq sseq full_sseq'
         cmd = '$(which diamond) blastx --more-sensitive -k 0 -p {0} -d {1} -q {2} --id {3} --subject-cover {4} ' \
-              '-f {5} -o {6}'.format(threads, dmnd_db, query_file, pass_pid, pass_pcv, fmt, out_file)
+              '-f {5} -o {6} --masking no'.format(threads, dmnd_db, query_file, pass_pid, pass_pcv, fmt, out_file)
         print(cmd)
         os.system(cmd)
     return out_file
@@ -53,12 +53,12 @@ def load_dmnd_result(result_file, target_file):
                 if key == 'prot_snp':
                     key = 'known_prot_snp'
                 tdes[key] = value
-            itemDic = {'seqtype': 'cds', 'func': 'divers', 'mech': 'divers', 'known_prot_snp': ''}
-            for item in itemDic.keys():
+            item_dic = {'seqtype': 'cds', 'func': 'divers', 'mech': 'divers', 'known_prot_snp': ''}
+            for item in item_dic.keys():
                 if item in tdes.keys():
                     data[item] = tdes[item]
                 else:
-                    data[item] = itemDic[item]
+                    data[item] = item_dic[item]
             if int(data['strand']) < 0:
                 data['strand'] = -1
             else:
