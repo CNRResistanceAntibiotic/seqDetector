@@ -763,13 +763,13 @@ def main(args):
     # Check the location of databases:
     print("\nSearch for the databases:")
     check_db = 0
-    cds_target_file = args.cds_target_file
+    cds_target_file = os.path.abspath(args.cds_target_file)
     if os.path.exists(cds_target_file):
         check_db += 1
         print("  CDS database {0} found".format(cds_target_file))
     else:
         print("  No CDS database")
-    dna_target_file = args.dna_target_file
+    dna_target_file = os.path.abspath(args.dna_target_file)
     if os.path.exists(dna_target_file):
         check_db += 1
         print("  DNA database {0} found".format(dna_target_file))
@@ -780,6 +780,13 @@ def main(args):
         exit(1)
     else:
         print("{0} database provided\n".format(check_db))
+
+    database_split = os.path.basename(cds_target_file).split(".")[0].split("_")
+
+    # Print version and subset database
+    print("\nList ARM-DB Subset: {0}\n".format(database_split[2]))
+
+    print("\nVersion ARM-DB: {0}\n".format(database_split[1]))
 
     print("\nFeature detection parameters:")
     pass_pid = float(args.perc_cv)
