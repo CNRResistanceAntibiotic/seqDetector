@@ -69,8 +69,11 @@ def make_dmnd_database(fasta_file, force=False, threads=8):
     if os.path.exists(dmnd_db + ".dmnd") and not force:
         print('\nDatabase {0} already exists'.format(dmnd_db))
     else:
-        subprocess.check_call('$(which diamond) makedb -p {0} --in {1} -d {2}'.format(threads, fasta_file, dmnd_db),
-                              shell=True)
+        process = subprocess.Popen('$(which diamond) makedb -p {0} --in {1} -d {2}'
+                                   .format(threads, fasta_file, dmnd_db),
+                                   shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT).stdout.read()
+        print("\n{0}\n".format(process.decode("utf-8")))
+
     return dmnd_db
 
 
@@ -261,6 +264,7 @@ def extract_substitutions(data):
     with open(in_file, 'w') as in_f:
         SeqIO.write(records, in_f, 'fasta')
     cmd = "$(which clustalo) -i {0} -o {1} --outfmt=fa --force".format(in_file, out_file)  # , infile)
+    print(cmd, "\n")
     os.system(cmd)
 
     # parse alignment
@@ -269,7 +273,9 @@ def extract_substitutions(data):
         for rec in SeqIO.parse(inf_f, 'fasta'):
             records.append(rec)
     cmd = 'rm {0}'.format('tmp.*')
+    print(cmd, "\n")
     os.system(cmd)
+
     q_seq = records[0]
     t_seq = records[1]
     gaps = q_seq.seq.count('-') + t_seq.seq.count('-')

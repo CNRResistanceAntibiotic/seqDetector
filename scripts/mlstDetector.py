@@ -23,8 +23,8 @@ def load_set_file(set_file, sep='\t'):
             if line != '':
                 key, data = line.split(sep)
                 set_dic[key.lower()] = {}
-                dataList = data.split(',')
-                for data in dataList:
+                data_list = data.split(',')
+                for data in data_list:
                     key2, data2 = data.split(':')
                     set_dic[key.lower()][key2] = data2.split('|')
     return set_dic
