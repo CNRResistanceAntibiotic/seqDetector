@@ -263,9 +263,11 @@ def extract_substitutions(data):
     out_file = 'tmp.clu'
     with open(in_file, 'w') as in_f:
         SeqIO.write(records, in_f, 'fasta')
-    cmd = "$(which clustalo) -i {0} -o {1} --outfmt=fa --force".format(in_file, out_file)  # , infile)
-    print(cmd, "\n")
-    os.system(cmd)
+    cmd = "$(which clustalo) -i {0} -o {1} --outfmt=fa --force".format(in_file, out_file)
+
+    process = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT).stdout.read()
+    print("\n{0}\n{1}\n".format(cmd, process.decode("utf-8")))
+
 
     # parse alignment
     records = []
@@ -273,8 +275,9 @@ def extract_substitutions(data):
         for rec in SeqIO.parse(inf_f, 'fasta'):
             records.append(rec)
     cmd = 'rm {0}'.format('tmp.*')
-    print(cmd, "\n")
-    os.system(cmd)
+
+    process = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT).stdout.read()
+    print("\n{0}\n{1}\n".format(cmd, process.decode("utf-8")))
 
     q_seq = records[0]
     t_seq = records[1]
