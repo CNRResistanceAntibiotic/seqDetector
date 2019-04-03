@@ -5,6 +5,7 @@ import itertools
 import operator
 import os
 import re
+import subprocess
 import sys
 from collections import OrderedDict
 
@@ -31,10 +32,10 @@ def run_diam(dmnd_db, query_file, pass_pid=70, pass_pcv=70, threads=8, force=Tru
               'gapopen gaps qseq sseq full_sseq'
         cmd = '$(which diamond) blastx --more-sensitive -k 0 -p {0} -d {1} -q {2} --id {3} --subject-cover {4} ' \
               '-f {5} -o {6} --masking no'.format(threads, dmnd_db, query_file, pass_pid, pass_pcv, fmt, out_file)
-        print(cmd)
-        os.system(cmd)
+        process = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT).stdout.read()
+        print("\n{0}\n{1}".format(cmd, process.decode("utf-8")))
     return out_file
-
+ls
 
 def load_dmnd_result(result_file, target_file):
     target_dic = load_fasta(target_file)
