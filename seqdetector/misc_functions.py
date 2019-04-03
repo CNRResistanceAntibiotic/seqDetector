@@ -4,6 +4,7 @@ import os
 import re
 import subprocess
 from collections import OrderedDict
+from shutil import rmtree
 
 from Bio import SeqIO
 from Bio.Alphabet.IUPAC import ExtendedIUPACProtein, IUPACAmbiguousDNA
@@ -77,7 +78,7 @@ def make_dmnd_database(fasta_file, force=False, threads=8):
     return dmnd_db
 
 
-def cds_global_alignment(dmnd_results, query_dic):
+def cds_global_alignment(dmnd_results, query_dic, wk_dir):
     for data in dmnd_results:
         q_seq = query_dic[data['qid']]
         # print '\n', data['tid'], data['strand'], data['tlen'], data['tstart'], data['tend']
@@ -153,7 +154,7 @@ def cds_global_alignment(dmnd_results, query_dic):
                     # print data['qseq']
                     data['qseq'] = str(q_seq[data['qstart'] - 1:data['qend']].seq)
                     # print data['qseq']
-        data = extract_substitutions(data)
+        data = extract_substitutions(data, wk_dir)
     return dmnd_results
 
 
@@ -214,7 +215,7 @@ def blastn_to_global_alignment(blastn_results, query_dic, target_dic):
     return blastn_results
 
 
-def extract_substitutions(data):
+def extract_substitutions(data, wk_dir):
     # translate query sequence
     q_seq = data['qseq']
     t_seq = data['fulltseq']
@@ -259,8 +260,13 @@ def extract_substitutions(data):
     for ID, seq in [('qseq', q_seq), ('tseq', t_seq)]:
         rec = SeqRecord(seq, id=ID, description='')
         records.append(rec)
-    in_file = 'tmp.fasta'
-    out_file = 'tmp.clu'
+
+    tmp_clustalo_path = os.path.join(wk_dir, "tmp_clustalo")
+
+    os.makedirs(tmp_clustalo_path)
+
+    in_file = os.path.join(tmp_clustalo_path, 'tmp.fasta')
+    out_file = os.path.join(tmp_clustalo_path,'tmp.clu')
     with open(in_file, 'w') as in_f:
         SeqIO.write(records, in_f, 'fasta')
     cmd = "$(which clustalo) -i {0} -o {1} --outfmt=fa --force".format(in_file, out_file)
@@ -274,10 +280,9 @@ def extract_substitutions(data):
     with open(out_file) as inf_f:
         for rec in SeqIO.parse(inf_f, 'fasta'):
             records.append(rec)
-    cmd = 'rm {0}'.format('tmp.*')
 
-    process = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT).stdout.read()
-    print("\n{0}\n{1}\n".format(cmd, process.decode("utf-8")))
+    # remove clustalo work dir
+    rmtree(tmp_clustalo_path)
 
     q_seq = records[0]
     t_seq = records[1]
@@ -394,13 +399,13 @@ def reverse_complement(dna_seq):
     return ''.join(rev_cplt)
 
 
-def dna_global_alignemnt(blastn_results, queryDic, targetDic):
+def dna_global_alignemnt(blastn_results, query_dic, target_dic):
     for data in blastn_results:
         tseq = data['tseq']
         qseq = data['qseq']
-        full_tseq = targetDic[data['tid']].seq
+        full_tseq = target_dic[data['tid']].seq
         if str(full_tseq) != str(tseq).replace('-', ''):
-            full_qseq = queryDic[data['qid']].seq
+            full_qseq = query_dic[data['qid']].seq
             if data['strand'] > 0:
                 qstart = data['qstart'] - (data['tstart'] - 1)
                 qend = data['qend'] + (data['tlen'] - data['tend'])
@@ -483,6 +488,8 @@ def extract_mutations(data):
     if indel == 1:
         pre_pos, pre_query, pre_target = 0, '', ''
         index_dels = []
+        open_insertion_index = ""
+        open_deletion_index = ""
         for n, d in enumerate(muts):
             target = d['t_base']
             pos = d['a_dna_pos']
@@ -531,9 +538,9 @@ def extract_mutations(data):
 
 
 def read_bam_count(filename, depth_pass=20, qual_pass=20, fraction_pass=0.8):
-    with open(filename) as tsvfile:
+    with open(filename) as tsv_file:
 
-        reader = csv.DictReader(tsvfile, delimiter='\t')
+        reader = csv.DictReader(tsv_file, delimiter='\t')
         result = {}
         alarm = []
         # for n, line in enumerate(inf_f):

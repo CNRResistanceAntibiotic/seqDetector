@@ -873,7 +873,7 @@ def main(args):
         query_dic = load_fasta(query_file)
         if len(dmnd_results) > 0:
             # Global alignment of CDS and mutation extraction if CDS features detected
-            dmnd_results = cds_global_alignment(dmnd_results, query_dic)
+            dmnd_results = cds_global_alignment(dmnd_results, query_dic, wk_dir)
             if os.path.exists(bam_file):
                 # Extraction quality of bases and sequencing depth if bam detected
                 dmnd_results = cds_extract_quality_and_depth(bam_file, query_file, dmnd_results, out_prefix, force)
