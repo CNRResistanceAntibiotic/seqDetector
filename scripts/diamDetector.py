@@ -754,11 +754,12 @@ def main(args):
     file_list = []
     for sample_name in sample_dic.keys():
         try:
-            sample_file = glob.glob(os.path.join(wk_dir, sample_name + '.fasta'))[0]
+            print("Search for the assembly file: {0}".format(os.path.join(wk_dir, '{0}.fasta'.format(sample_name))))
+            sample_file = os.path.join(wk_dir, '{0}.fasta'.format(sample_name))
             file_list.append(sample_file)
-            print('Sample {0}: {1}'.format(sample_name, sample_file))
+            print('Assembly for {0}: {1}'.format(sample_name, sample_file))
         except IndexError:
-            print('Sample {0}: file not found!'.format(sample_name))
+            print('Assembly for {0}: file not found!'.format(sample_name))
 
     # Check the location of databases:
     print("\nSearch for the databases:")
