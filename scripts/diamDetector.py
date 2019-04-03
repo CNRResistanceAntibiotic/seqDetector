@@ -35,7 +35,7 @@ def run_diam(dmnd_db, query_file, pass_pid=70, pass_pcv=70, threads=8, force=Tru
         process = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT).stdout.read()
         print("\n{0}\n{1}".format(cmd, process.decode("utf-8")))
     return out_file
-ls
+
 
 def load_dmnd_result(result_file, target_file):
     target_dic = load_fasta(target_file)
