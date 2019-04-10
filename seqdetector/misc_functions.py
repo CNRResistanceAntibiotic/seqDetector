@@ -53,7 +53,10 @@ def evaluate_dna_alg(seq, ref_seq):
         else:
             gap_tag = 'off'
     pid = round(100 * nid / float(a_len), 2)
+
     pcv = round(100 * (len(seq.replace('-', ''))) / float(len(ref_seq.replace('-', ''))), 2)
+
+
     return {'nid': nid, 'pid': pid, 'pcv': pcv, 'pos': nid, 'ppos': pid, 'gap': gap, 'opengap': open_gap, 'alen': a_len}
 
 
@@ -157,7 +160,7 @@ def cds_global_alignment(dmnd_results, query_dic, wk_dir):
         data = extract_substitutions(data, wk_dir)
     return dmnd_results
 
-
+"""
 def blastn_to_global_alignment(blastn_results, query_dic, target_dic):
     for data in blastn_results:
         tseq = data['tseq']
@@ -213,7 +216,7 @@ def blastn_to_global_alignment(blastn_results, query_dic, target_dic):
             data['pcv'] = d['pcv']
         data = extract_mutations(data)
     return blastn_results
-
+"""
 
 def extract_substitutions(data, wk_dir):
     # translate query sequence
@@ -266,13 +269,13 @@ def extract_substitutions(data, wk_dir):
     os.makedirs(tmp_clustalo_path)
 
     in_file = os.path.join(tmp_clustalo_path, 'tmp.fasta')
-    out_file = os.path.join(tmp_clustalo_path,'tmp.clu')
+    out_file = os.path.join(tmp_clustalo_path, 'tmp.clu')
     with open(in_file, 'w') as in_f:
         SeqIO.write(records, in_f, 'fasta')
     cmd = "$(which clustalo) -i {0} -o {1} --outfmt=fa --force".format(in_file, out_file)
 
     process = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT).stdout.read()
-    print("\n{0}\n{1}\n".format(cmd, process.decode("utf-8")))
+    #print("\n{0}\n{1}\n".format(cmd, process.decode("utf-8")))
 
 
     # parse alignment
@@ -298,7 +301,8 @@ def extract_substitutions(data, wk_dir):
     mismatch = len(dif_indexes)
     nid = len(t_seq.seq) - mismatch
     pid = round(100 * nid / float(len(t_seq.seq)), 2)
-    pcv = round(100 * len(str(q_seq.seq).replace('-', '')) / float(len(str(t_seq.seq).replace('-', ''))), 2)
+
+    pcv = round(100 * len(str(q_seq.seq).replace('-', '').replace('*', '')) / float(len(str(t_seq.seq).replace('-', ''))), 2)
 
     # extract mutations from alignment
     unclassified_subs = []

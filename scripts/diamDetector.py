@@ -30,8 +30,8 @@ def run_diam(dmnd_db, query_file, pass_pid=70, pass_pcv=70, threads=8, force=Tru
     else:
         fmt = '6 qseqid qframe sseqid slen qstart qend sstart send length pident nident ppos positive mismatch ' \
               'gapopen gaps qseq sseq full_sseq'
-        cmd = '$(which diamond) blastx --more-sensitive -k 0 -p {0} -d {1} -q {2} --id {3} --subject-cover {4} ' \
-              '-f {5} -o {6} --masking no'.format(threads, dmnd_db, query_file, pass_pid, pass_pcv, fmt, out_file)
+        cmd = "$(which diamond) blastx --more-sensitive -k 0 -p {0} -d {1} -q {2} --id {3} --subject-cover {4} " \
+              "-f {5} -o {6} --masking no".format(threads, dmnd_db, query_file, pass_pid, pass_pcv, fmt, out_file)
         process = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT).stdout.read()
         print("\n{0}\n{1}".format(cmd, process.decode("utf-8")))
     return out_file
@@ -71,7 +71,7 @@ def load_dmnd_result(result_file, target_file):
                 data['qstart'], data['qend'] = data['qend'], data['qstart']
             for item in ['pid', 'ppos']:
                 data[item] = round(float(data[item]), 2)
-            data['pcv'] = round(100 * len(data['qseq'].replace('-', '')) / float(len(data['fulltseq'])), 2)
+            data['pcv'] = round(100 * len(data['tseq'].replace('-', '')) / float(len(data['fulltseq'])), 2)
             dmnd_results.append(data)
     return dmnd_results
 
@@ -876,6 +876,7 @@ def main(args):
         if len(dmnd_results) > 0:
             # Global alignment of CDS and mutation extraction if CDS features detected
             dmnd_results = cds_global_alignment(dmnd_results, query_dic, wk_dir)
+
             if os.path.exists(bam_file):
                 # Extraction quality of bases and sequencing depth if bam detected
                 dmnd_results = cds_extract_quality_and_depth(bam_file, query_file, dmnd_results, out_prefix, force)
