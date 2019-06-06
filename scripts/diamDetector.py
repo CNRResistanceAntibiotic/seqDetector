@@ -660,9 +660,7 @@ def write_fasta(results, out_dir, out_prefix):
             dna_records_list.append(dna_rec)
 
     with open(aa_outfile, 'w') as aa_out_f, open(dna_outfile, 'w') as dna_out_f:
-        aa_records_list = sorted(aa_records_list)
         SeqIO.write(aa_records_list, aa_out_f, 'fasta')
-        dna_records_list = sorted(dna_records_list)
         SeqIO.write(dna_records_list, dna_out_f, 'fasta')
 
 
