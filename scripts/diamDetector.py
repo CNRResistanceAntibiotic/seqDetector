@@ -680,7 +680,7 @@ def write_gbk(results, query_dic, out_dir, out_prefix):
     keys_list = list(rec_dic.keys())
 
     # sort list of keys
-    keys = sorted(keys_list, key=lambda x: int(x.split('_')[1]))
+    keys = sorted(keys_list)
 
     n = 0
     for key in keys:
