@@ -35,15 +35,15 @@ def bam_count(bam_file, fasta_ref, output_dir, q=0, b=0, feature_name='', site_f
     sample = os.path.basename(bam_file).split(".")[0]
 
     if feature_name == '' and site_file == '':
-        out_file = os.path.join(output_dir, sample + '_{0}_raw.csv'.format('whole_genome'))
+        out_file = os.path.join(output_dir, '{0}_{1}_raw.csv'.format(sample, 'whole_genome'))
         cmd = '$(which bam-readcount) -w 0 -q {0} -b {1} -i -f {2} {3} > {4}'.format(q, b, fasta_ref, bam_file,
                                                                                      out_file)
     elif feature_name != '' and site_file == '':
-        out_file = os.path.join(output_dir, sample + '_{0}_raw.csv'.format(feature_name))
+        out_file = os.path.join(output_dir, '{0}_{1}_raw.csv'.format(sample, feature_name))
         cmd = '$(which bam-readcount) -w 0 -q {0} -b {1} -i -f {2} {3} > {4}'.format(q, b, fasta_ref, bam_file,
                                                                                      out_file)
     else:
-        out_file = os.path.join(output_dir, sample + '_{0}_raw.csv'.format(feature_name))
+        out_file = os.path.join(output_dir, '{0}_{1}_raw.csv'.format(sample, feature_name))
         cmd = '$(which bam-readcount) -w 0 -q {0} -b {1} -i -l {2} -f {3} {4} > {5}'.format(q, b, site_file, fasta_ref,
                                                                                       bam_file, out_file)
 
@@ -74,9 +74,9 @@ def bam_count_stats(bam_count_file, feature_name, header, output_dir, bam_file):
     sample = os.path.basename(bam_file).split(".")[0]
 
     if feature_name == '':
-        out_file = os.path.join(output_dir, sample+'_{0}_stats'.format('whole_genome'))
+        out_file = os.path.join(output_dir, '{0}_{1}_stats'.format(sample, 'whole_genome'))
     else:
-        out_file = os.path.join(output_dir, sample + '_{0}_stats'.format(feature_name))
+        out_file = os.path.join(output_dir, '{0}_{1}_stats'.format(sample, feature_name))
 
     with open(bam_count_file) as count_f:
         ctgs = []
@@ -89,6 +89,7 @@ def bam_count_stats(bam_count_file, feature_name, header, output_dir, bam_file):
         for line in count_f:
             line = line.strip().split('\t')
             ctg = line[0]
+
             if ctg not in ctgs:
                 if len(ctgs) > 0:
                     d = OrderedDict([('ID', ctgs[-1]), ('start', start), ('end', end), ('size', base_nb)])
@@ -102,7 +103,6 @@ def bam_count_stats(bam_count_file, feature_name, header, output_dir, bam_file):
                         s.append(('Ref_quali_{0}'.format(key), value))
                     s = OrderedDict(s)
                     result_stat.append(s)
-
                 ctg_ref_depth, ctg_ref_qual = [], []
                 # ctg_ref_depth = []
                 ctgs.append(ctg)
@@ -217,7 +217,6 @@ def main(bam_file, fasta_ref, position, output_dir, feature_name, force=False, m
         position = ''
     if position != '':
         site_file = write_site_file(position, output_dir)
-
     bam_count_file = bam_count(bam_file, fasta_ref, output_dir, mapping_qual, base_qual, feature_name, site_file, force)
     if os.path.exists(site_file):
         os.remove(site_file)

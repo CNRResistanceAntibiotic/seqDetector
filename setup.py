@@ -1,6 +1,6 @@
 #!/usr/bin/python3
 
-# setup.py file install libraries wanted for seqassembler
+# setup.py file install libraries wanted for seqdetector
 # launch it with pip install -e .
 
 # Install setuptools if not already present.

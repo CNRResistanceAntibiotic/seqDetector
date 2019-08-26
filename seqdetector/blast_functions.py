@@ -1,5 +1,6 @@
 #!/usr/bin/python3
 import os
+import subprocess
 
 from seqdetector import bam2data
 from seqdetector.misc_functions import load_fasta, read_bam_count, read_bam_stat, reverse_complement
@@ -12,8 +13,8 @@ def make_blastn_database(fasta_file, force=False, threads=8):
         print('\nDatabase {0} already exists'.format(blastn_db))
     else:
         cmd = '$(which makeblastdb) -in {0} -dbtype nucl -out {1}'.format(fasta_file, blastn_db)
-        # print cmd
-        os.system(cmd)
+        process = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT).stdout.read()
+        print("\n{0}\n{1}".format(cmd, process.decode("utf-8")))
     return blastn_db
 
 
@@ -26,8 +27,8 @@ def run_blastn(blastn_db, query_file, pass_pid=70, force=True, evalue=0.0001, th
               'gapopen gaps qseq sseq\"'
         cmd = '$(which blastn) -out {0} -outfmt {1} -query {2} -db {3} -num_threads {4} -perc_identity {5} -evalue {6}' \
             .format(out_file, fmt, query_file, blastn_db, threads, pass_pid, evalue)
-        print(cmd)
-        os.system(cmd)
+        process = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT).stdout.read()
+        print("\n{0}\n{1}".format(cmd, process.decode("utf-8")))
     return out_file
 
 
@@ -331,6 +332,13 @@ def cds_extract_quality_and_depth(bam_file, fas_file, dmnd_results, out_prefix, 
                                 if ref in ['A', 'T', 'C', 'G']:
                                     ref_depth = '{0}/{1}'.format(d['{0}_depth'.format(ref)], d['total_depth'])
                                     ref_qual = str(round(float(d['{0}_quality'.format(ref)]), 1))
+
+                                else:
+                                    continue
+
+
+                                # Commente par Aurelien BIRER "SAns doute un residus de vieux code"
+                                """
                                 elif ref == 'W':
                                     ref_depth = 'A{0} T{1}/{2}'.format(d['A_depth'], d['T_depth'], d['total_depth'])
                                     ref_qual = 'A{0} T{1}'.format(round(float(d['A_quality']), 1),
@@ -388,6 +396,8 @@ def cds_extract_quality_and_depth(bam_file, fas_file, dmnd_results, out_prefix, 
                                                                             round(float(d['C_quality']), 1),
                                                                             round(float(d['G_quality']), 1),
                                                                             round(float(d['T_quality']), 1))
+                                """
+
                             except KeyError:
                                 print('Position {0} in {1} for feature {2} with reference depth of 0!'
                                       .format(pos, data['qid'], data['tid']))
@@ -405,6 +415,10 @@ def cds_extract_quality_and_depth(bam_file, fas_file, dmnd_results, out_prefix, 
                                 base = base + ref
                                 depth = depth + ',' + ref_depth
                                 qual = qual + ',' + ref_qual
+
+                        if depth == 0:
+                            continue
+
                         bases.append(base)
                         quals.append(qual)
                         depths.append(depth)
@@ -425,6 +439,12 @@ def cds_extract_quality_and_depth(bam_file, fas_file, dmnd_results, out_prefix, 
                                 if ref in ['A', 'T', 'C', 'G']:
                                     ref_depth = '{0}/{1}'.format(d['{0}_depth'.format(ref)], d['total_depth'])
                                     ref_qual = str(round(float(d['{0}_quality'.format(ref)]), 1))
+
+                                else:
+                                    continue
+
+                                # Commente par Aurelien BIRER "SAns doute un residus de vieux code"
+                                """
                                 elif ref == 'W':
                                     ref_depth = 'A{0} T{1}/{2}'.format(d['A_depth'],
                                                                        d['T_depth'],
@@ -495,6 +515,8 @@ def cds_extract_quality_and_depth(bam_file, fas_file, dmnd_results, out_prefix, 
                                                                             round(float(d['C_quality']), 1),
                                                                             round(float(d['G_quality']), 1),
                                                                             round(float(d['T_quality']), 1))
+                                """
+
                             except KeyError:
                                 print('Position {0} in {1} for feature {2} with reference depth of 0!'
                                       .format(pos, data['qid'], data['tid']))
@@ -512,6 +534,10 @@ def cds_extract_quality_and_depth(bam_file, fas_file, dmnd_results, out_prefix, 
                                 base = base + ref
                                 depth = depth + ',' + ref_depth
                                 qual = qual + ',' + ref_qual
+
+                        if depth == 0:
+                            continue
+
                         bases.append(base)
                         quals.append(qual)
                         depths.append(depth)
@@ -522,4 +548,5 @@ def cds_extract_quality_and_depth(bam_file, fas_file, dmnd_results, out_prefix, 
                     else:
                         txt = ''
                     snp['dna_data'] = txt
+
     return dmnd_results

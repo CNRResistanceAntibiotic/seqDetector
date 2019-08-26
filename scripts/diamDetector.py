@@ -38,6 +38,7 @@ def run_diam(dmnd_db, query_file, pass_pid=70, pass_pcv=70, threads=8, force=Tru
 
 
 def load_dmnd_result(result_file, target_file):
+    print("\n***** Start loading Diamond Result *****")
     target_dic = load_fasta(target_file)
     dmnd_results = []
     header = 'qid strand tid tlen qstart qend tstart tend ' \
@@ -73,10 +74,12 @@ def load_dmnd_result(result_file, target_file):
                 data[item] = round(float(data[item]), 2)
             data['pcv'] = round(100 * len(data['tseq'].replace('-', '')) / float(len(data['fulltseq'])), 2)
             dmnd_results.append(data)
+
+    print("***** End loading Diamond Result *****\n")
     return dmnd_results
 
 
-def overlap_filter(results, taxonomy, passoverlap=50):
+def overlap_filter(results, taxonomy, pass_overlap=50):
     filtered_results = []
     ctgs = list(set([d['qid'] for d in results]))
     ctgs.sort()
@@ -86,6 +89,7 @@ def overlap_filter(results, taxonomy, passoverlap=50):
             if d['qid'] == ctg:
                 subset_results.append(d)
         print(ctg, len(subset_results), 'features -> kept:', end=' ')
+        print("")
         comparisons = list(itertools.combinations(subset_results, 2))
         # print ctg, len(subset_result.keys()), len(comparisons)
         del_list = []
@@ -99,15 +103,17 @@ def overlap_filter(results, taxonomy, passoverlap=50):
                 tid2 = data2['tid']
                 pos2 = range(data2['qstart'], data2['qend'] + 1)
                 intersection = len([x for x in pos1 if x in pos2])
-                if intersection >= passoverlap:
+                if intersection >= pass_overlap:
                     pattern = re.compile('.+_\[(.+)\]::.+')
                     match1 = pattern.match(tid1)
                     match2 = pattern.match(tid2)
+
                     if match1 and match2 and taxonomy != '':
                         if taxonomy.lower() in match1.groups()[0].lower() and \
                                 taxonomy.lower() in match2.groups()[0].lower():
                             score1 = (data1['nid'] + data1['npos'] - data1['gap']) / float(data1['tlen'])
                             score2 = (data2['nid'] + data2['npos'] - data2['gap']) / float(data2['tlen'])
+
                             if score1 >= score2:
                                 del_list.append(subset_results.index(data2))
                             else:
@@ -118,10 +124,10 @@ def overlap_filter(results, taxonomy, passoverlap=50):
                             del_list.append(subset_results.index(data1))
                     elif match1 and taxonomy != '':
                         if taxonomy.lower() not in match1.groups()[0].lower():
-                            del_list.append(subset_results.index(data1))
+                            del_list.append(subset_results.index(data2))
                     elif match2 and taxonomy != '':
                         if taxonomy.lower() not in match2.groups()[0].lower():
-                            del_list.append(subset_results.index(data2))
+                            del_list.append(subset_results.index(data1))
                     else:
                         score1 = (data1['nid'] + data1['npos'] - data1['gap']) / float(data1['tlen'])
                         score2 = (data2['nid'] + data2['npos'] - data2['gap']) / float(data2['tlen'])
@@ -135,7 +141,7 @@ def overlap_filter(results, taxonomy, passoverlap=50):
         del_list.reverse()
         for item in del_list:
             del subset_results[item]
-        print(len(subset_results))
+
         filtered_results = filtered_results + subset_results
 
     return filtered_results
@@ -360,7 +366,7 @@ def dna_data_to_dict(id, d, dna_data, item):
     return mut
 
 
-def write_csv_html(dmnd_results, mut_prefix, id_prefix, pass_alarm_qual=20, pass_alarm_depth=30, pass_alarm_frac=0.9):
+def write_csv_html(merged_results, mut_prefix, id_prefix, pass_alarm_qual=20, pass_alarm_depth=30, pass_alarm_frac=0.9):
     header = ['Function', 'DBase name', '% ident', '% cov', 'Sequence Warning',
               'Min depth', 'Mean depth', 'Max depth',
               'Min qual', 'Mean qual', 'Max qual',
@@ -369,7 +375,7 @@ def write_csv_html(dmnd_results, mut_prefix, id_prefix, pass_alarm_qual=20, pass
               'Query name', 'Query start', 'Query end', 'Query strand', 'Query length',
               'Query DNA seq', 'Query prot seq', 'DBase dna seq', 'DBase prot seq']
     records = []
-    for data in dmnd_results:
+    for data in merged_results:
         if 'warning' in data:
             warning = data['warning']
         else:
@@ -386,6 +392,7 @@ def write_csv_html(dmnd_results, mut_prefix, id_prefix, pass_alarm_qual=20, pass
 
         mutations = []
         snps = []
+
         for item in ['prot_snp', 'dna_snp']:
             if item in data:
                 for d in data[item]:
@@ -789,9 +796,9 @@ def main(args):
     print("\nVersion ARM-DB: {0}\n".format(database_split[1]))
 
     print("\nFeature detection parameters:")
-    pass_pid = float(args.perc_cv)
+    pass_pid = float(args.perc_id)
     print("  Identity threshold: {0}%".format(pass_pid))
-    pass_pcv = float(args.perc_id)
+    pass_pcv = float(args.perc_cv)
     print("  Coverage threshold: {0}%".format(pass_pcv))
     pass_overlap = int(args.overlap)
     print("  Maximum feature overlap: {0}-bases\n".format(pass_overlap))
@@ -827,6 +834,8 @@ def main(args):
             dmnd_db = make_dmnd_database(cds_target_file, force)
             dmnd_result_file = run_diam(dmnd_db, query_file, pass_pid, pass_pcv, threads, force)
             dmnd_results = load_dmnd_result(dmnd_result_file, cds_target_file)
+
+
         else:
             print('No CDS to search')
             dmnd_results = []
@@ -844,25 +853,33 @@ def main(args):
         print('\nNumber of detected features: {0}'.format(len(dmnd_results) + len(blastn_results)))
         if taxonomy_filter_detect == 'strict' and taxonomy != '':
             dmnd_results = taxonomy_filter_detect(dmnd_results, taxonomy)
+
             blastn_results = taxonomy_filter_detect(blastn_results, taxonomy)
             print('Number of detected features after stric taxonomic filtering: {0}'.format(
                 len(dmnd_results) + len(blastn_results)))
+
         if taxonomy_filter_detect == 'lax':
+
             dmnd_results = overlap_filter(dmnd_results, taxonomy, pass_overlap)
+
             print('\nNumber of detected features after lax taxonomic and overlap filtering: {0} \n'.format(
                 len(dmnd_results)))
             blastn_results = overlap_filter(blastn_results, taxonomy, pass_overlap)
             print('\nNumber of detected features after lax taxonomic and overlap filtering: {0}'
                   .format(len(blastn_results)))
             print('\n######## Number of detected features after lax taxonomic and overlap filtering: {0} ########'
-                .format(len(dmnd_results) + len(blastn_results)))
+                  .format(len(dmnd_results) + len(blastn_results)))
+
         else:
             dmnd_results = overlap_filter(dmnd_results, '', pass_overlap)
+
             blastn_results = overlap_filter(blastn_results, '', pass_overlap)
             print('Number of detected features after overlap filtering: {0}'.format(
                 len(dmnd_results) + len(blastn_results)))
 
         print('')
+
+
 
         # Set the prefix of the output
         if args.outPrefix == '':
@@ -870,10 +887,12 @@ def main(args):
         else:
             out_prefix = args.outPrefix
 
+
+
         query_dic = load_fasta(query_file)
         if len(dmnd_results) > 0:
             # Global alignment of CDS and mutation extraction if CDS features detected
-            dmnd_results = cds_global_alignment(dmnd_results, query_dic, wk_dir)
+            dmnd_results = cds_global_alignment(dmnd_results, query_dic, wk_dir, pass_pid, pass_pcv)
 
             if os.path.exists(bam_file):
                 # Extraction quality of bases and sequencing depth if bam detected
@@ -884,12 +903,15 @@ def main(args):
         if len(blastn_results) > 0:
             # Global alignment of DNA and mutation extraction if DNA features detected
             target_dic = load_fasta(dna_target_file)
-            blastn_results = dna_global_alignemnt(blastn_results, query_dic, target_dic)
+            blastn_results = dna_global_alignemnt(blastn_results, query_dic, target_dic, pass_pid, pass_pcv)
             if os.path.exists(bam_file):
                 # Extraction quality of bases and sequencing depth if bam detected
                 blastn_results = dna_extract_quality_and_depth(bam_file, query_file, blastn_results, out_prefix, force)
             # Show the detected DNA features
             show_dna_result(blastn_results)
+
+
+
 
         # Merge DNA and CDS feature result files
         merged_results = dmnd_results + blastn_results

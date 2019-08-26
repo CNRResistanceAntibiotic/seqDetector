@@ -81,8 +81,11 @@ def make_dmnd_database(fasta_file, force=False, threads=8):
     return dmnd_db
 
 
-def cds_global_alignment(dmnd_results, query_dic, wk_dir):
+def cds_global_alignment(dmnd_results, query_dic, wk_dir, pass_pid, pass_pcv):
+
     for data in dmnd_results:
+
+
         q_seq = query_dic[data['qid']]
         # print '\n', data['tid'], data['strand'], data['tlen'], data['tstart'], data['tend']
         if data['strand'] > 0:
@@ -157,7 +160,15 @@ def cds_global_alignment(dmnd_results, query_dic, wk_dir):
                     # print data['qseq']
                     data['qseq'] = str(q_seq[data['qstart'] - 1:data['qend']].seq)
                     # print data['qseq']
+
         data = extract_substitutions(data, wk_dir)
+
+    # remove entry by their new pid and pcov
+    for item in dmnd_results:
+        if float(item['pid']) < pass_pid or float(item['pcv']) < pass_pcv:
+            print("Entry removed by cause of low identity or coverage: {0}".format(item))
+            dmnd_results.remove(item)
+
     return dmnd_results
 
 """
@@ -217,6 +228,7 @@ def blastn_to_global_alignment(blastn_results, query_dic, target_dic):
         data = extract_mutations(data)
     return blastn_results
 """
+
 
 def extract_substitutions(data, wk_dir):
     # translate query sequence
@@ -300,6 +312,7 @@ def extract_substitutions(data, wk_dir):
     dif_indexes.sort()
     mismatch = len(dif_indexes)
     nid = len(t_seq.seq) - mismatch
+
     pid = round(100 * nid / float(len(t_seq.seq)), 2)
 
     pcv = round(100 * len(str(q_seq.seq).replace('-', '').replace('*', '')) / float(len(str(t_seq.seq).replace('-', ''))), 2)
@@ -403,7 +416,7 @@ def reverse_complement(dna_seq):
     return ''.join(rev_cplt)
 
 
-def dna_global_alignemnt(blastn_results, query_dic, target_dic):
+def dna_global_alignemnt(blastn_results, query_dic, target_dic, pass_pid, pass_pcv):
     for data in blastn_results:
         tseq = data['tseq']
         qseq = data['qseq']
@@ -457,6 +470,12 @@ def dna_global_alignemnt(blastn_results, query_dic, target_dic):
             data['opengap'] = d['opengap']
             data['pcv'] = d['pcv']
         data = extract_mutations(data)
+
+    # remove entry by their new pid and pcov
+    for item in blastn_results:
+        if float(item['pid']) < pass_pid or float(item['pcv']) < pass_pcv:
+            print("Entry removed by cause of low identity or coverage: {0}".format(item))
+            blastn_results.remove(item)
     return blastn_results
 
 
