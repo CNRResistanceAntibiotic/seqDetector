@@ -161,6 +161,7 @@ def cds_global_alignment(dmnd_results, query_dic, wk_dir, pass_pid, pass_pcv):
                     data['qseq'] = str(q_seq[data['qstart'] - 1:data['qend']].seq)
                     # print data['qseq']
 
+
         data = extract_substitutions(data, wk_dir)
 
     # remove entry by their new pid and pcov
@@ -315,7 +316,11 @@ def extract_substitutions(data, wk_dir):
 
     pid = round(100 * nid / float(len(t_seq.seq)), 2)
 
-    pcv = round(100 * len(str(q_seq.seq).replace('-', '').replace('*', '')) / float(len(str(t_seq.seq).replace('-', ''))), 2)
+    pcv = round(100 * len(str(q_seq.seq).replace('-', '').replace('*', '')) /
+                float(len(str(t_seq.seq).replace('-', ''))), 2)
+
+    if pcv > 100:
+        pcv = 100.0
 
     # extract mutations from alignment
     unclassified_subs = []
@@ -469,6 +474,7 @@ def dna_global_alignemnt(blastn_results, query_dic, target_dic, pass_pid, pass_p
             data['gap'] = d['gap']
             data['opengap'] = d['opengap']
             data['pcv'] = d['pcv']
+
         data = extract_mutations(data)
 
     # remove entry by their new pid and pcov

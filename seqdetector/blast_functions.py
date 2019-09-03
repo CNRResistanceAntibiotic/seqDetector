@@ -140,6 +140,9 @@ def dna_extract_quality_and_depth(bam_file, fas_file, blastn_results, out_prefix
                         if ref in ['A', 'T', 'C', 'G']:
                             ref_depth = '{0}/{1}'.format(d['{0}_depth'.format(ref)], d['total_depth'])
                             ref_qual = str(round(float(d['{0}_quality'.format(ref)]), 1))
+                        else:
+                            continue
+                        """
                         elif ref == 'W':
                             ref_depth = 'A{0} T{1}/{2}'.format(d['A_depth'], d['T_depth'], d['total_depth'])
                             ref_qual = 'A{0} T{1}'.format(round(float(d['A_quality']), 1), round(float(d['T_quality']),
@@ -195,7 +198,7 @@ def dna_extract_quality_and_depth(bam_file, fas_file, blastn_results, out_prefix
                                                                     round(float(d['C_quality']), 1),
                                                                     round(float(d['G_quality']), 1),
                                                                     round(float(d['T_quality']), 1))
-
+                        """
                         txt = 'p:{0}; f:{1}; b:{2}; d:{3}; q:{4}'.format(dna_pos, strand, ref, ref_depth, ref_qual)
 
                     elif strand < 0 and q_base != 'd':
@@ -205,6 +208,9 @@ def dna_extract_quality_and_depth(bam_file, fas_file, blastn_results, out_prefix
                         if ref in ['A', 'T', 'C', 'G']:
                             ref_depth = '{0}/{1}'.format(d['{}_depth'.format(ref)], d['total_depth'])
                             ref_qual = str(round(float(d['{}_quality'.format(ref)]), 1))
+                        else:
+                            continue
+                        """
                         elif ref == 'W':
                             ref_depth = 'A{0} T{1}/{2}'.format(d['A_depth'], d['T_depth'], d['total_depth'])
                             ref_qual = 'A{0} T{1}'.format(round(float(d['A_quality']), 1),
@@ -260,6 +266,7 @@ def dna_extract_quality_and_depth(bam_file, fas_file, blastn_results, out_prefix
                                                                     round(float(d['C_quality']), 1),
                                                                     round(float(d['G_quality']), 1),
                                                                     round(float(d['T_quality']), 1))
+                        """
 
                         txt = 'p:{0}; f:{1}; b:{2}; d:{3}; q:{4}'.format(dna_pos, strand, ref, ref_depth, ref_qual)
                     else:

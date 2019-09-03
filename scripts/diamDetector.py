@@ -887,8 +887,6 @@ def main(args):
         else:
             out_prefix = args.outPrefix
 
-
-
         query_dic = load_fasta(query_file)
         if len(dmnd_results) > 0:
             # Global alignment of CDS and mutation extraction if CDS features detected
@@ -909,9 +907,6 @@ def main(args):
                 blastn_results = dna_extract_quality_and_depth(bam_file, query_file, blastn_results, out_prefix, force)
             # Show the detected DNA features
             show_dna_result(blastn_results)
-
-
-
 
         # Merge DNA and CDS feature result files
         merged_results = dmnd_results + blastn_results
