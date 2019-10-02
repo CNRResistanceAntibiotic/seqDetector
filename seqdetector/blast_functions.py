@@ -18,8 +18,8 @@ def make_blastn_database(fasta_file, force=False, threads=8):
     return blastn_db
 
 
-def run_blastn(blastn_db, query_file, pass_pid=70, force=True, evalue=0.0001, threads=8):
-    out_file = os.path.join(os.path.dirname(query_file), 'blastn_output.csv')
+def run_blastn(blastn_db, query_file, pass_pid=70, force=True, evalue=0.0001, threads=8, out_file=""):
+
     if not force and os.path.exists(out_file):
         print('\nResult file {0} already exists'.format(out_file))
     else:
@@ -142,133 +142,24 @@ def dna_extract_quality_and_depth(bam_file, fas_file, blastn_results, out_prefix
                             ref_qual = str(round(float(d['{0}_quality'.format(ref)]), 1))
                         else:
                             continue
-                        """
-                        elif ref == 'W':
-                            ref_depth = 'A{0} T{1}/{2}'.format(d['A_depth'], d['T_depth'], d['total_depth'])
-                            ref_qual = 'A{0} T{1}'.format(round(float(d['A_quality']), 1), round(float(d['T_quality']),
-                                                                                                 1))
-                        elif ref == 'S':
-                            ref_depth = 'C{0} G{1}/{2}'.format(d['C_depth'], d['G_depth'], d['total_depth'])
-                            ref_qual = 'C{0} G{1}'.format(round(float(d['C_quality']), 1),
-                                                        round(float(d['G_quality']), 1))
-                        elif ref == 'M':
-                            ref_depth = 'A{0} C{1}/{2}'.format(d['A_depth'], d['C_depth'], d['total_depth'])
-                            ref_qual = 'A{0} C{1}'.format(round(float(d['A_quality']), 1), round(float(d['C_quality']),
-                                                                                                 1))
-                        elif ref == 'K':
-                            ref_depth = 'G{0} T{1}/{2}'.format(d['G_depth'], d['T_depth'], d['total_depth'])
-                            ref_qual = 'G{0} T{1}'.format(round(float(d['G_quality']), 1), round(float(d['T_quality']),
-                                                                                                 1))
-                        elif ref == 'R':
-                            ref_depth = 'A{0} G{1}/{2}'.format(d['A_depth'], d['G_depth'], d['total_depth'])
-                            ref_qual = 'A{0} G{1}'.format(round(float(d['A_quality']), 1), round(float(d['G_quality']),
-                                                                                                 1))
-                        elif ref == 'Y':
-                            ref_depth = 'C{0} T{1}/{2}'.format(d['C_depth'], d['T_depth'], d['total_depth'])
-                            ref_qual = 'C{0} T{1}'.format(round(float(d['C_quality']), 1), round(float(d['T_quality']),
-                                                                                               1))
-                        elif ref == 'B':
-                            ref_depth = 'C{0} G{1} T{2}/{3}'.format(d['C_depth'], d['G_depth'], d['T_depth'],
-                                                                    d['total_depth'])
-                            ref_qual = 'C{0} G{1} T{2}'.format(round(float(d['C_quality']), 1),
-                                                               round(float(d['G_quality']), 1),
-                                                               round(float(d['T_quality']), 1))
-                        elif ref == 'D':
-                            ref_depth = 'A{0} G{1} T{2}/{3}'.format(d['A_depth'], d['G_depth'], ['T_depth'],
-                                                                    d['total_depth'])
-                            ref_qual = 'A{0} G{1} T{2}'.format(round(float(d['A_quality']), 1),
-                                                               round(float(d['G_quality']), 1),
-                                                               round(float(d['T_quality']), 1))
-                        elif ref == 'H':
-                            ref_depth = 'A{0} C{1} T{2}/{3}'.format(d['A_depth'], d['C_depth'], d['T_depth'],
-                                                                    d['total_depth'])
-                            ref_qual = 'A{0} C{1} T{2}'.format(round(float(d['A_quality']), 1),
-                                                               round(float(d['C_quality']), 1),
-                                                               round(float(d['T_quality']), 1))
-                        elif ref == 'V':
-                            ref_depth = 'A{0} C{1} G{2}/{3}'.format(d['A_depth'], d['C_depth'], d['G_depth'],
-                                                                    d['total_depth'])
-                            ref_qual = 'A{0} C{1} G{2}'.format(round(float(d['A_quality']), 1),
-                                                               round(float(d['C_quality']), 1),
-                                                               round(float(d['G_quality']), 1))
-                        else:
-                            ref_depth = 'A{0} C{1} G{2} T{3}/{4}'.format(d['A_depth'], d['C_depth'], d['G_depth'],
-                                                                         d['T_depth'], d['total_depth'])
-                            ref_qual = 'A{0} C{1} G{2} T{3}'.format(round(float(d['A_quality']), 1),
-                                                                    round(float(d['C_quality']), 1),
-                                                                    round(float(d['G_quality']), 1),
-                                                                    round(float(d['T_quality']), 1))
-                        """
+
                         txt = 'p:{0}; f:{1}; b:{2}; d:{3}; q:{4}'.format(dna_pos, strand, ref, ref_depth, ref_qual)
 
                     elif strand < 0 and q_base != 'd':
-                        dna_pos = end - dna_pos + 1
-                        d = result[ctg][str(dna_pos)]
-                        ref = d['reference'].upper()
-                        if ref in ['A', 'T', 'C', 'G']:
-                            ref_depth = '{0}/{1}'.format(d['{}_depth'.format(ref)], d['total_depth'])
-                            ref_qual = str(round(float(d['{}_quality'.format(ref)]), 1))
+                        dna_pos = end - (dna_pos + 1)
+                        # depth known at "dna_pos" position
+                        if str(dna_pos) in result[ctg]:
+                            d = result[ctg][str(dna_pos)]
+                            ref = d['reference'].upper()
+                            if ref in ['A', 'T', 'C', 'G']:
+                                ref_depth = '{0}/{1}'.format(d['{}_depth'.format(ref)], d['total_depth'])
+                                ref_qual = str(round(float(d['{}_quality'.format(ref)]), 1))
+                            else:
+                                continue
+                            txt = 'p:{0}; f:{1}; b:{2}; d:{3}; q:{4}'.format(dna_pos, strand, ref, ref_depth, ref_qual)
+                        # depth unknown at "dna_pos" position
                         else:
-                            continue
-                        """
-                        elif ref == 'W':
-                            ref_depth = 'A{0} T{1}/{2}'.format(d['A_depth'], d['T_depth'], d['total_depth'])
-                            ref_qual = 'A{0} T{1}'.format(round(float(d['A_quality']), 1),
-                                                          round(float(d['T_quality']), 1))
-                        elif ref == 'S':
-                            ref_depth = 'C{0} G{1}/{2}'.format(d['C_depth'], d['G_depth'], d['total_depth'])
-                            ref_qual = 'C{0} G{1}'.format(round(float(d['C_quality']), 1),
-                                                          round(float(d['G_quality']), 1))
-                        elif ref == 'M':
-                            ref_depth = 'A{0} C{1}/{2}'.format(d['A_depth'], d['C_depth'], d['total_depth'])
-                            ref_qual = 'A{0} C{1}'.format(round(float(d['A_quality']), 1),
-                                                          round(float(d['C_quality']), 1))
-                        elif ref == 'K':
-                            ref_depth = 'G{0} T{1}/{2}'.format(d['G_depth'], d['T_depth'], d['total_depth'])
-                            ref_qual = 'G{0} T{1}'.format(round(float(d['G_quality']), 1),
-                                                          round(float(d['T_quality']), 1))
-                        elif ref == 'R':
-                            ref_depth = 'A{0} G{1}/{2}'.format(d['A_depth'], d['G_depth'], d['total_depth'])
-                            ref_qual = 'A{0} G{1}'.format(round(float(d['A_quality']), 1),
-                                                          round(float(d['G_quality']), 1))
-                        elif ref == 'Y':
-                            ref_depth = 'C{0} T{1}/{2}'.format(d['C_depth'], d['T_depth'], d['total_depth'])
-                            ref_qual = 'C{0} T{1}'.format(round(float(d['C_quality']), 1),
-                                                          round(float(d['T_quality']), 1))
-                        elif ref == 'B':
-                            ref_depth = 'C{0} G{1} T{2}/{3}'.format(d['C_depth'], d['G_depth'], d['T_depth'],
-                                                                    d['total_depth'])
-                            ref_qual = 'C{0} G{1} T{2}'.format(round(float(d['C_quality']), 1),
-                                                               round(float(d['G_quality']), 1),
-                                                               round(float(d['T_quality']), 1))
-                        elif ref == 'D':
-                            ref_depth = 'A{0} G{1} T{2}/{3}'.format(d['A_depth'], d['G_depth'], d['T_depth'],
-                                                                    d['total_depth'])
-                            ref_qual = 'A{0} G{1} T{2}'.format(round(float(d['A_quality']), 1),
-                                                               round(float(d['G_quality']), 1),
-                                                               round(float(d['T_quality']), 1))
-                        elif ref == 'H':
-                            ref_depth = 'A{0} C{1} T{2}/{3}'.format(d['A_depth'], d['C_depth'], d['T_depth'],
-                                                                    d['total_depth'])
-                            ref_qual = 'A{0} C{1} T{2}'.format(round(float(d['A_quality']), 1),
-                                                               round(float(d['C_quality']), 1),
-                                                               round(float(d['T_quality']), 1))
-                        elif ref == 'V':
-                            ref_depth = 'A{0} C{1} G{2}/{3}'.format(d['A_depth'], d['C_depth'], d['G_depth'],
-                                                                    d['total_depth'])
-                            ref_qual = 'A{0} C{1} G{2}'.format(round(float(d['A_quality']), 1),
-                                                               round(float(d['C_quality']), 1),
-                                                               round(float(d['G_quality']), 1))
-                        else:
-                            ref_depth = 'A{0} C{1} G{2} T{3}/{4}'.format(d['A_depth'], d['C_depth'], d['G_depth'],
-                                                                         d['T_depth'], d['total_depth'])
-                            ref_qual = 'A{0} C{1} G{2} T{3}'.format(round(float(d['A_quality']), 1),
-                                                                    round(float(d['C_quality']), 1),
-                                                                    round(float(d['G_quality']), 1),
-                                                                    round(float(d['T_quality']), 1))
-                        """
-
-                        txt = 'p:{0}; f:{1}; b:{2}; d:{3}; q:{4}'.format(dna_pos, strand, ref, ref_depth, ref_qual)
+                            txt = ''
                     else:
                         txt = ''
                     snp['dna_data'] = txt

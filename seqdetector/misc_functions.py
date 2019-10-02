@@ -85,7 +85,6 @@ def cds_global_alignment(dmnd_results, query_dic, wk_dir, pass_pid, pass_pcv):
 
     for data in dmnd_results:
 
-
         q_seq = query_dic[data['qid']]
         # print '\n', data['tid'], data['strand'], data['tlen'], data['tstart'], data['tend']
         if data['strand'] > 0:

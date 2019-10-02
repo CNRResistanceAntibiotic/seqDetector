@@ -5,6 +5,7 @@ import itertools
 import operator
 import os
 import re
+import shutil
 import subprocess
 import sys
 from collections import OrderedDict
@@ -23,8 +24,8 @@ from seqdetector.misc_functions import load_fasta, make_dmnd_database, dna_globa
     load_sample_name
 
 
-def run_diam(dmnd_db, query_file, pass_pid=70, pass_pcv=70, threads=8, force=True):
-    out_file = os.path.join(os.path.dirname(query_file), 'diam_output.csv')
+def run_diam(dmnd_db, query_file, pass_pid=70, pass_pcv=70, threads=8, force=True, out_file=""):
+
     if not force and os.path.exists(out_file):
         print('\nResult file {0} already exists'.format(out_file))
     else:
@@ -829,10 +830,11 @@ def main(args):
             taxonomy_filter_detect = 'none'
             print('No taxonomy provided: none taxonomy filtering will be perfomed')
 
+        out_diamond_file = os.path.join(os.path.dirname(query_file), 'diam_output.csv')
         # Launch CDS detection
         if os.path.exists(cds_target_file):
             dmnd_db = make_dmnd_database(cds_target_file, force)
-            dmnd_result_file = run_diam(dmnd_db, query_file, pass_pid, pass_pcv, threads, force)
+            dmnd_result_file = run_diam(dmnd_db, query_file, pass_pid, pass_pcv, threads, force, out_diamond_file)
             dmnd_results = load_dmnd_result(dmnd_result_file, cds_target_file)
 
 
@@ -840,10 +842,12 @@ def main(args):
             print('No CDS to search')
             dmnd_results = []
 
+        out_blastn_file = os.path.join(os.path.dirname(query_file), 'blastn_output.csv')
+
         # Launch DNA detection
         if os.path.exists(dna_target_file):
             blastn_db = make_blastn_database(dna_target_file, force)
-            blastn_result_file = run_blastn(blastn_db, query_file, pass_pid, force, 0.0001, 8)
+            blastn_result_file = run_blastn(blastn_db, query_file, pass_pid, force, 0.0001, 8, out_blastn_file)
             blastn_results = load_blastn_result(blastn_result_file, dna_target_file, pass_pid, pass_pcv)
         else:
             print('No DNA sequence to search')
@@ -929,6 +933,14 @@ def main(args):
             write_gbk(merged_results, query_dic, out_dir, out_prefix)
             print("\nStart to write fasta\n")
             write_fasta(merged_results, out_dir, out_prefix)
+
+            if n >= 2:
+                # remove file
+                os.remove(out_diamond_file)
+                os.remove(out_blastn_file)
+
+                shutil.rmtree(out_dir)
+                shutil.rmtree(mut_dir)
         else:
             print('\nNo results!\n')
 

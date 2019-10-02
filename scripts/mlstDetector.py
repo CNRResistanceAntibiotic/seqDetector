@@ -533,9 +533,11 @@ def main(args):
         # Make blastn database, launch blastn and load the results
         blastn_results = []
 
+        out_blastn_file = os.path.join(os.path.dirname(query_file), 'blastn_output.csv')
+
         if os.path.exists(dna_target_file):
             blastn_db = make_blastn_database(dna_target_file, force)
-            blastn_result_file = run_blastn(blastn_db, query_file, pass_pid, force, 0.0001, 8)
+            blastn_result_file = run_blastn(blastn_db, query_file, pass_pid, force, 0.0001, 8, out_blastn_file)
             blastn_results = load_blastn_result(blastn_result_file, dna_target_file, pass_pid, pass_pcv)
             print('\nNumber of detected features: {0}'.format(len(blastn_results)))
 
