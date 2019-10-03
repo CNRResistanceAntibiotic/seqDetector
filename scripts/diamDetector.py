@@ -771,16 +771,26 @@ def main(args):
     # Check the location of databases:
     print("\nSearch for the databases:")
     check_db = 0
+    cds_process = True
     cds_target_file = os.path.abspath(args.cds_target_file)
     if os.path.exists(cds_target_file):
-        check_db += 1
-        print("  CDS database {0} found".format(cds_target_file))
+        if os.stat(cds_target_file).st_size == 0 :
+            print("  CDS database {0} found but EMPTY !!!!!!!!".format(cds_target_file))
+            cds_process = False
+        else:
+            check_db += 1
+            print("  CDS database {0} found".format(cds_target_file))
     else:
         print("  No CDS database")
     dna_target_file = os.path.abspath(args.dna_target_file)
+    dna_process = True
     if os.path.exists(dna_target_file):
-        check_db += 1
-        print("  DNA database {0} found".format(dna_target_file))
+        if os.stat(dna_target_file).st_size == 0:
+            print("  DNA database {0} found but EMPTY !!!!!!!!".format(dna_target_file))
+            dna_process = False
+        else:
+            check_db += 1
+            print("  DNA database {0} found".format(dna_target_file))
     else:
         print("  No DNA database")
     if check_db == 0:
@@ -832,7 +842,7 @@ def main(args):
 
         out_diamond_file = os.path.join(os.path.dirname(query_file), 'diam_output.csv')
         # Launch CDS detection
-        if os.path.exists(cds_target_file):
+        if os.path.exists(cds_target_file) and cds_process:
             dmnd_db = make_dmnd_database(cds_target_file, force)
             dmnd_result_file = run_diam(dmnd_db, query_file, pass_pid, pass_pcv, threads, force, out_diamond_file)
             dmnd_results = load_dmnd_result(dmnd_result_file, cds_target_file)
@@ -845,7 +855,7 @@ def main(args):
         out_blastn_file = os.path.join(os.path.dirname(query_file), 'blastn_output.csv')
 
         # Launch DNA detection
-        if os.path.exists(dna_target_file):
+        if os.path.exists(dna_target_file) and dna_process:
             blastn_db = make_blastn_database(dna_target_file, force)
             blastn_result_file = run_blastn(blastn_db, query_file, pass_pid, force, 0.0001, 8, out_blastn_file)
             blastn_results = load_blastn_result(blastn_result_file, dna_target_file, pass_pid, pass_pcv)
@@ -882,8 +892,6 @@ def main(args):
                 len(dmnd_results) + len(blastn_results)))
 
         print('')
-
-
 
         # Set the prefix of the output
         if args.outPrefix == '':
