@@ -542,17 +542,18 @@ def main(args):
             mlst_schema = [mlst_db[1]]
 
         for schema in mlst_schema:
-
+            print("Current schema: {0}".format(schema))
             mlst_name = '{0}_{1}'.format(mlst_db[0], schema)
 
             mlst_dir = os.path.join(db_dir, "dbMLST", mlst_name, 'pubmlst_download')
-
+            print("MLST directory selected : {0}".format(mlst_dir))
             mlst_scheme_file = os.path.join(mlst_dir, 'profile.txt')
             dna_target_file = os.path.join(wk_dir, 'profile_{0}.fasta'.format(schema))
 
             if not os.path.exists(mlst_scheme_file):
                 print("\nNo MLST scheme defined for {0} in {1}\n".format(taxonomy, set_file))
                 dna_target_file, mlst_scheme_file = 0, 0
+                exit(1)
             if not os.path.exists(dna_target_file):
                 print("\nNo fasta file for {0}\n".format(taxonomy))
                 cmd = 'cat {0}/*.tfa > {1}/profile_{2}.fasta'.format(mlst_dir, wk_dir, schema)
