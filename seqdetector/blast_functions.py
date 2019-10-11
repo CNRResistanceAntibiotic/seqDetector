@@ -44,6 +44,8 @@ def load_blastn_result(result_file, target_file, pass_pid=70, pass_pcv=70):
             q_id = data['qid']
             t_id = data['tid']
             t_des = {}
+            """
+            print(target_dic[t_id].id)
             for item in target_dic[t_id].description.split(';'):
                 try:
                     key, value = item.split(':')
@@ -53,12 +55,14 @@ def load_blastn_result(result_file, target_file, pass_pid=70, pass_pcv=70):
                 except Exception as e:
                     print(e)
                     t_des = {}
-            itemDic = {'seqtype': 'dna', 'func': 'divers', 'mech': 'divers', 'known_dna_snp': ''}
-            for item in itemDic.keys():
+            print("mama")
+            """
+            item_dic = {'seqtype': 'dna', 'func': 'divers', 'mech': 'divers', 'known_dna_snp': ''}
+            for item in item_dic.keys():
                 if item in t_des.keys():
                     data[item] = t_des[item]
                 else:
-                    data[item] = itemDic[item]
+                    data[item] = item_dic[item]
 
             q_frame = int(data['strand'].split('/')[0])
             t_frame = int(data['strand'].split('/')[1])
@@ -85,6 +89,7 @@ def load_blastn_result(result_file, target_file, pass_pid=70, pass_pcv=70):
                 data[item] = int(data[item])
             for item in ['pid', 'ppos']:
                 data[item] = round(float(data[item]), 2)
+
             data['pcv'] = round(100 * len(data['qseq'].replace('-', '')) / float(len(target_dic[t_id].seq)), 2)
 
             if data['pcv'] >= pass_pcv and data['pid'] >= pass_pid:

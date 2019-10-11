@@ -1,6 +1,7 @@
 #!/usr/bin/python3
 import os, glob, re, itertools, argparse
 import sys
+import numpy as np
 from collections import OrderedDict
 from Bio import SeqIO
 from Bio.Seq import Seq
@@ -10,9 +11,9 @@ import pandas as pd
 from Bio.SeqFeature import FeatureLocation
 from Bio.SeqFeature import SeqFeature
 
-from seqdetector.blast_functions import make_blastn_database, run_blastn, load_blastn_result, \
-    blastn_to_global_alignment, dna_extract_quality_and_depth
-from seqdetector.misc_functions import load_sample_name, load_fasta
+from seqdetector.blast_functions import make_blastn_database, run_blastn, load_blastn_result,\
+    dna_extract_quality_and_depth
+from seqdetector.misc_functions import load_sample_name, load_fasta, dna_global_alignemnt
 
 
 def load_set_file(set_file, sep='\t'):
@@ -196,25 +197,25 @@ def write_fasta(results, out_dir, out_prefix):
             dna_records.append(dna_rec)
 
     with open(aa_outfile, 'w') as aa_out_f, open(dna_outfile, 'w') as dna_out_f:
-        aa_records.sort(cmp=lambda x, y: cmp(int(x.id.split('_')[1]) * 1E8 + int(x.id.split('__')[1]),
-                                             int(y.id.split('_')[1]) * 1E8 + int(y.id.split('__')[1])))
-        SeqIO.write(aa_records, aa_out_f, 'fasta')
-        dna_records.sort(cmp=lambda x, y: cmp(int(x.id.split('_')[1]) * 1E8 + int(x.id.split('__')[1]),
-                                              int(y.id.split('_')[1]) * 1E8 + int(y.id.split('__')[1])))
-        SeqIO.write(dna_records, dna_out_f, 'fasta')
+        if aa_records:
+            aa_records = sorted(dna_records, key=lambda x: (int(x.id.split('_')[1]) * 1E8 + int(x.id.split('__')[1])))
+            SeqIO.write(aa_records, aa_out_f, 'fasta')
+        if dna_records:
+            dna_records = sorted(dna_records, key=lambda x: (int(x.id.split('_')[1]) * 1E8 + int(x.id.split('__')[1])))
+            SeqIO.write(dna_records, dna_out_f, 'fasta')
 
 
 def write_gbk(results, query_dic, out_dir, out_prefix):
     rec_dic = {}
-    results.sort()
     for data in results:
         key = data['qid']
         if key not in rec_dic:
             rec_dic[key] = [data]
         else:
             rec_dic[key].append(data)
-    keys = rec_dic.keys()
-    keys.sort(cmp=lambda x, y: cmp(int(x.split('_')[1]), int(y.split('_')[1])))
+    # get keys in a list
+    *keys, = rec_dic
+    keys.sort()
     n = 0
     for key in keys:
         records = rec_dic[key]
@@ -248,24 +249,24 @@ def write_gbk(results, query_dic, out_dir, out_prefix):
             SeqIO.write([rec], out_f, 'genbank')
 
 
-def read_mlst_scheme(mlst_scheme_file, sep='\t', mlst_size=7):
+def read_mlst_scheme(mlst_scheme_file, sep='\t', mlst_size=8):
     mlst_dic = {}
-    mlst_list = []
+    mlst_present_list = []
     with open(mlst_scheme_file) as in_f:
         for n, line in enumerate(in_f):
             if n == 0:
-                mlst_list = line.strip().split(sep)[1:mlst_size + 1]
+                mlst_present_list = line.strip().split(sep)[1:mlst_size + 1]
             else:
                 line = line.strip().split(sep)
                 mlst_name = line[0]
                 mlst_barcode = ' '.join(line[1:mlst_size + 1])
                 mlst_dic[mlst_barcode] = mlst_name
-    return mlst_dic, mlst_list
+    return mlst_dic, mlst_present_list
 
 
-def identify_mlst_profile(mlstDic, mlstList, blastn_results, idPrefix, outPrefix):
+def identify_mlst_profile(mlst_dic, mlst_list, blastn_results, id_prefix, out_prefix):
     mlst_barcode = []
-    for item in mlstList:
+    for item in mlst_list:
         pid = 0
         pcv = 0
         barcode = '0'
@@ -292,15 +293,19 @@ def identify_mlst_profile(mlstDic, mlstList, blastn_results, idPrefix, outPrefix
                             barcode = allele
         if found == 0:
             mlst_barcode.append(barcode + '?')
-    if ' '.join(mlst_barcode) in mlstDic:
-        ST = mlstDic[' '.join(mlst_barcode)]
+    if ' '.join(mlst_barcode) in mlst_dic:
+        ST = mlst_dic[' '.join(mlst_barcode)]
     else:
         ST = '?'
-    result = OrderedDict([('MLST_name', outPrefix), ('ST', ST)] + zip(mlstList, mlst_barcode))
-    df = pd.DataFrame(result, index=[outPrefix])
+
+    zipped = zip(mlst_list, mlst_barcode)
+    zip_list = list(map(list, zipped))
+
+    result = OrderedDict([('MLST_name', out_prefix), ('ST', ST)] + zip_list)
+    df = pd.DataFrame(result, index=[out_prefix])
     print(df)
-    df.to_csv('{0}_{1}.csv'.format(idPrefix, outPrefix), sep='\t', index=False)
-    df.to_html('{0}_{1}.html'.format(idPrefix, outPrefix))
+    df.to_csv('{0}_{1}.csv'.format(id_prefix, out_prefix), sep='\t', index=False)
+    df.to_html('{0}_{1}.html'.format(id_prefix, out_prefix))
     return blastn_results
 
 
@@ -440,12 +445,15 @@ def write_csv_html(results, mut_prefix, id_prefix, out_prefix, pass_alarm_qual=2
 def main(args):
 
     # Check working directory
-    wk_dir = args.wkdir
+    wk_dir = args.wk_dir
     if glob.glob(wk_dir) is None:
         print("\nDirectory {0} not found!\n".format(wk_dir))
         exit(1)
     else:
         print("\nDirectory {0} found".format(wk_dir))
+
+    # Prefix
+    out_prefix = args.out_prefix
 
     # Assign sample file
     sample_file = args.sample_file
@@ -477,9 +485,11 @@ def main(args):
     # Check the location of MLST file:
     set_file = args.set_file
     set_dic = {}
+    db_dir = ""
     if os.path.exists(set_file):
         print("\nSetting file: {0}".format(set_file))
         set_dic = load_set_file(set_file)
+        db_dir = os.path.dirname(set_file)
     else:
         print('\nSetting file {0} not found!\n'.format(set_file))
         exit(1)
@@ -515,80 +525,107 @@ def main(args):
         print(title)
         print("~" * len(title))
 
-        # Set MLST scheme:       
-        mlst_db = set_dic[taxonomy]['mlst']
-        mlst_name = '{0}_{1}'.format(mlst_db[0], mlst_db[1])
-        mlst_dir = os.path.join(set_dic['dbdir']['mlst'][0], mlst_name, 'pubmlst_download')
-        mlst_scheme_file = os.path.join(mlst_dir, 'profile.txt')
-        dna_target_file = os.path.join(mlst_dir, 'profile.fasta')
-        if not os.path.exists(mlst_scheme_file):
-            print("\nNo MLST scheme defined for {0} in {1}\n".format(taxonomy, set_file))
-            dna_target_file, mlst_scheme_file = 0, 0
-        if not os.path.exists(dna_target_file):
-            print("\nNo fasta file for {0}\n".format(taxonomy))
-            cmd = 'cat {0}/*.tfa > {1}/profile.fasta'.format(mlst_dir, mlst_dir)
-            print(cmd)
-            os.system(cmd)
+        # Set MLST scheme:
+        mlst_db = ""
+        if 'mlst' in set_dic[taxonomy]:
+            mlst_db = set_dic[taxonomy]['mlst']
 
-        # Make blastn database, launch blastn and load the results
-        blastn_results = []
-
-        out_blastn_file = os.path.join(os.path.dirname(query_file), 'blastn_output.csv')
-
-        if os.path.exists(dna_target_file):
-            blastn_db = make_blastn_database(dna_target_file, force)
-            blastn_result_file = run_blastn(blastn_db, query_file, pass_pid, force, 0.0001, 8, out_blastn_file)
-            blastn_results = load_blastn_result(blastn_result_file, dna_target_file, pass_pid, pass_pcv)
-            print('\nNumber of detected features: {0}'.format(len(blastn_results)))
-
-            # Filter the results for overlaps
-            blastn_results = overlap_filter(blastn_results, pass_overlap)
-            print('Number of detected features after overlap filtering: {0}'.format(len(blastn_results)))
         else:
-            print("\nMLST database file {0} not found!\n".format(dna_target_file))
+            print("No schema MLST for {0}", taxonomy)
             exit(1)
 
-        if len(blastn_results) > 0:
-            query_dic = load_fasta(query_file)
-            # Set the prefix of the output
-            print('')
-            if args.outPrefix == '':
-                out_prefix = mlst_name
-            else:
-                out_prefix = args.outPrefix
-            # Global alignement of DNA and mutation extraction if DNA features detected
-            target_dic = load_fasta(dna_target_file)
-            blastn_results = blastn_to_global_alignment(blastn_results, query_dic, target_dic)
-            if os.path.exists(bam_file):
-                # Extaction quality of bases and sequencing depth if bam detected
-                blastn_results = dna_extract_quality_and_depth(bam_file, query_file, blastn_results, out_prefix, force)
-            # Show the detected DNA features
-            view_dna_result(blastn_results)
-
-        # Set the directory to store depth and quality data
-        mut_dir = os.path.join(os.path.dirname(bam_file), 'Mutations_depth_quality')
-        if not os.path.exists(mut_dir):
-            os.mkdir(mut_dir)
-        mut_prefix = os.path.join(mut_dir, os.path.splitext(os.path.basename(query_file))[0].split('_')[0])
-        mlst_id_prefix = os.path.splitext(query_file)[0]
-
-        if os.path.exists(mlst_scheme_file):
-            # Load MLST profils
-            print('MLST name: {0}'.format(mlst_name))
-            mlst_dic, mlst_list = read_mlst_scheme(mlst_scheme_file)
-            # Identify ST from MLST profils
-            print('Number of MLST profiles: {0} for genes: {1}\n'.format(len(mlst_dic.keys()), ', '.join(mlst_list)))
-            identify_mlst_profile(mlst_dic, mlst_list, blastn_results, mlst_id_prefix, out_prefix)
-
-        if len(blastn_results) > 0:
-            write_csv_html(blastn_results, mut_prefix, mlst_id_prefix, out_prefix)
-            out_dir = os.path.join(os.path.dirname(query_file), 'Detected_sequences')
-            if not os.path.exists(out_dir):
-                os.mkdir(out_dir)
-            write_gbk(blastn_results, query_dic, out_dir, out_prefix)
-            write_fasta(blastn_results, out_dir, out_prefix)
+        mlst_schema = []
+        if "&" in mlst_db[1]:
+            for name_mlst in mlst_db[1].split("&"):
+                mlst_schema.append( name_mlst)
         else:
-            print('\nNo results!\n')
+            mlst_schema = [mlst_db[1]]
+
+        for schema in mlst_schema:
+
+            mlst_name = '{0}_{1}'.format(mlst_db[0], schema)
+
+            mlst_dir = os.path.join(db_dir, "dbMLST", mlst_name, 'pubmlst_download')
+
+            mlst_scheme_file = os.path.join(mlst_dir, 'profile.txt')
+            dna_target_file = os.path.join(wk_dir, 'profile_{0}.fasta'.format(schema))
+
+            if not os.path.exists(mlst_scheme_file):
+                print("\nNo MLST scheme defined for {0} in {1}\n".format(taxonomy, set_file))
+                dna_target_file, mlst_scheme_file = 0, 0
+            if not os.path.exists(dna_target_file):
+                print("\nNo fasta file for {0}\n".format(taxonomy))
+                cmd = 'cat {0}/*.tfa > {1}/profile_{2}.fasta'.format(mlst_dir, wk_dir, schema)
+                print("Fasta file created ! ")
+                print(cmd)
+                os.system(cmd)
+
+            # Make blastn database, launch blastn and load the results
+            blastn_results = []
+
+            out_blastn_file = os.path.join(os.path.dirname(query_file), 'blastn_output_{0}.csv'.format(schema))
+
+            if os.path.exists(dna_target_file):
+                blastn_db = make_blastn_database(dna_target_file, force)
+                blastn_result_file = run_blastn(blastn_db, query_file, pass_pid, force, 0.0001, 8, out_blastn_file)
+
+                blastn_results = load_blastn_result(blastn_result_file, dna_target_file, pass_pid, pass_pcv)
+                print('\nNumber of detected features: {0}'.format(len(blastn_results)))
+
+                for element in blastn_results:
+                    if "uidA" in element:
+                        print(element)
+
+                # Filter the results for overlaps
+                blastn_results = overlap_filter(blastn_results, pass_overlap)
+                print('Number of detected features after overlap filtering: {0}'.format(len(blastn_results)))
+            else:
+                print("\nMLST database file {0} not found!\n".format(dna_target_file))
+                exit(1)
+
+            query_dic = {}
+            if len(blastn_results) > 0:
+                query_dic = load_fasta(query_file)
+                # Set the prefix of the output
+                print('')
+                if args.out_prefix == '':
+                    out_prefix = mlst_name
+                else:
+                    out_prefix = args.out_prefix
+                # Global alignement of DNA and mutation extraction if DNA features detected
+                target_dic = load_fasta(dna_target_file)
+                blastn_results = dna_global_alignemnt(blastn_results, query_dic, target_dic, pass_pid, pass_pcv)
+                if os.path.exists(bam_file):
+                    # Extaction quality of bases and sequencing depth if bam detected
+                    blastn_results = dna_extract_quality_and_depth(bam_file, query_file, blastn_results, out_prefix, force)
+                # Show the detected DNA features
+                view_dna_result(blastn_results)
+
+            # Set the directory to store depth and quality data
+            mut_dir = os.path.join(os.path.dirname(bam_file), 'Mutations_depth_quality_{0}'.format(schema))
+            if not os.path.exists(mut_dir):
+                os.mkdir(mut_dir)
+            mut_prefix = os.path.join(mut_dir, os.path.splitext(os.path.basename(query_file))[0].split('_')[0])
+            mlst_id_prefix = os.path.splitext(query_file)[0]
+
+            if os.path.exists(mlst_scheme_file):
+                # Load MLST profils
+                print('MLST name: {0}'.format(mlst_name))
+                mlst_dic, mlst_present_list = read_mlst_scheme(mlst_scheme_file)
+
+                # Identify ST from MLST profils
+                print('Number of MLST profiles: {0} for genes: {1}\n'.format(len(mlst_dic.keys()), ', '.join(mlst_present_list)))
+                identify_mlst_profile(mlst_dic, mlst_present_list, blastn_results, mlst_id_prefix, out_prefix)
+
+            if len(blastn_results) > 0:
+                write_csv_html(blastn_results, mut_prefix, mlst_id_prefix, out_prefix)
+                out_dir = os.path.join(os.path.dirname(query_file), 'Detected_sequences_{0}'.format(schema))
+                if not os.path.exists(out_dir):
+                    os.mkdir(out_dir)
+                write_gbk(blastn_results, query_dic, out_dir, out_prefix)
+                write_fasta(blastn_results, out_dir, out_prefix)
+            else:
+                print('\nNo results!\n')
 
 
 def version():
@@ -607,7 +644,7 @@ def run():
     )
     parser.add_argument('-sf', '--sampleFile', dest="sample_file",
                         help='Tab-separated file containing the names of sample and the corresponding taxonomy (species/genus) [$wkdir/../sample.csv]')
-    parser.add_argument('-wd', '--wkdir', dest="wkdir", help='Directory containing the assembly files')
+    parser.add_argument('-wd', '--wkdir', dest="wk_dir", help='Directory containing the assembly files')
     parser.add_argument('-st', '--setFile', dest="set_file", default="/usr/local/readmapper-v0.1/setting.txt",
                         help='Setting file')
     parser.add_argument('-id', '--perc_id', dest="perc_id", default="98",
@@ -619,7 +656,7 @@ def run():
     parser.add_argument('-th', '--threads', dest="threads", default='8', help='Number of threads [8]')
     parser.add_argument('-F', '--Force', dest="Force", action="store_true", default=False,
                         help="Overwrite the detected files")
-    parser.add_argument('-o', '--outPrefix', dest="outPrefix", default='', help="Outprefix [<database_name>]")
+    parser.add_argument('-o', '--outPrefix', dest="out_prefix", default='', help="Outprefix [<database_name>]")
     parser.add_argument('-V', '--version', action='version', version='diamDetector-' + version(),
                         help="Prints version number")
     args = parser.parse_args()
