@@ -289,6 +289,7 @@ def dna_data_to_dict(id, d, dna_data, item):
 
 
 def write_csv_html(merged_results, mut_prefix, id_prefix, pass_alarm_qual=20, pass_alarm_depth=30, pass_alarm_frac=0.9):
+
     header = ['Function', 'DBase name', '% ident', '% cov', 'Sequence Warning',
               'Min depth', 'Mean depth', 'Max depth',
               'Min qual', 'Mean qual', 'Max qual',
@@ -342,9 +343,13 @@ def write_csv_html(merged_results, mut_prefix, id_prefix, pass_alarm_qual=20, pa
                                     depths = mut['Sequencing depth']
                                     for depth in depths.split(','):
                                         depth_ref, depth_total = depth.split('/')
-                                        frac = int(depth_ref) / float(depth_total)
-                                        if frac < pass_alarm_frac:
-                                            frac_alarm = 'frac<{0}'.format(pass_alarm_frac)
+                                        if int(depth_total) != 0:
+                                            frac = int(depth_ref) / float(depth_total)
+                                            if frac < pass_alarm_frac:
+                                                frac_alarm = 'frac<{0}'.format(pass_alarm_frac)
+                                                break
+                                        else:
+                                            frac_alarm = 'depth_total:0'
                                             break
 
                                 if qual_alarm == '':
@@ -412,9 +417,13 @@ def write_csv_html(merged_results, mut_prefix, id_prefix, pass_alarm_qual=20, pa
                                     for depth in depths.split(','):
                                         depth_ref, depth_total = depth.split('/')
                                         try:
-                                            frac = int(depth_ref) / float(depth_total)
-                                            if frac < pass_alarm_frac:
-                                                frac_alarm = 'frac<{0}'.format(pass_alarm_frac)
+                                            if int(depth_total) != 0:
+                                                frac = int(depth_ref) / float(depth_total)
+                                                if frac < pass_alarm_frac:
+                                                    frac_alarm = 'frac<{0}'.format(pass_alarm_frac)
+                                                    break
+                                            else:
+                                                frac_alarm = 'depth_total:0'
                                                 break
                                         except Exception as e:
                                             print(e)

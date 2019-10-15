@@ -31,9 +31,7 @@ def write_site_file(position, output_dir):
 
 
 def bam_count(bam_file, fasta_ref, output_dir, q=0, b=0, feature_name='', site_file='', force=False):
-
     sample = os.path.basename(bam_file).split(".")[0]
-
     if feature_name == '' and site_file == '':
         out_file = os.path.join(output_dir, '{0}_{1}_raw.csv'.format(sample, 'whole_genome'))
         cmd = '$(which bam-readcount) -w 0 -q {0} -b {1} -i -f {2} {3} > {4}'.format(q, b, fasta_ref, bam_file,

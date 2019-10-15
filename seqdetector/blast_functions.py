@@ -140,15 +140,18 @@ def dna_extract_quality_and_depth(bam_file, fas_file, blastn_results, out_prefix
 
                     if strand > 0 and q_base != 'd':
                         dna_pos = start + (dna_pos - 1)
-                        d = result[ctg][str(dna_pos)]
-                        ref = d['reference'].upper()
-                        if ref in ['A', 'T', 'C', 'G']:
-                            ref_depth = '{0}/{1}'.format(d['{0}_depth'.format(ref)], d['total_depth'])
-                            ref_qual = str(round(float(d['{0}_quality'.format(ref)]), 1))
-                        else:
-                            continue
+                        if str(dna_pos) in result[ctg]:
+                            d = result[ctg][str(dna_pos)]
+                            ref = d['reference'].upper()
+                            if ref in ['A', 'T', 'C', 'G']:
+                                ref_depth = '{0}/{1}'.format(d['{0}_depth'.format(ref)], d['total_depth'])
+                                ref_qual = str(round(float(d['{0}_quality'.format(ref)]), 1))
+                            else:
+                                continue
 
-                        txt = 'p:{0}; f:{1}; b:{2}; d:{3}; q:{4}'.format(dna_pos, strand, ref, ref_depth, ref_qual)
+                            txt = 'p:{0}; f:{1}; b:{2}; d:{3}; q:{4}'.format(dna_pos, strand, ref, ref_depth, ref_qual)
+                        else:
+                            txt = ''
 
                     elif strand < 0 and q_base != 'd':
                         dna_pos = end - (dna_pos + 1)
@@ -239,68 +242,6 @@ def cds_extract_quality_and_depth(bam_file, fas_file, dmnd_results, out_prefix, 
                                 else:
                                     continue
 
-
-                                # Commente par Aurelien BIRER "SAns doute un residus de vieux code"
-                                """
-                                elif ref == 'W':
-                                    ref_depth = 'A{0} T{1}/{2}'.format(d['A_depth'], d['T_depth'], d['total_depth'])
-                                    ref_qual = 'A{0} T{1}'.format(round(float(d['A_quality']), 1),
-                                                                  round(float(d['T_quality']), 1))
-                                elif ref == 'S':
-                                    ref_depth = 'C{0} G{1}/{2}'.format(d['C_depth'], d['G_depth'], d['total_depth'])
-                                    ref_qual = 'C{0} G{1}'.format(round(float(d['C_quality']), 1),
-                                                                  round(float(d['G_quality']), 1))
-                                elif ref == 'M':
-                                    ref_depth = 'A{0} C{1}/{2}'.format(d['A_depth'], d['C_depth'], d['total_depth'])
-                                    ref_qual = 'A{0} C{1}'.format(round(float(d['A_quality']), 1),
-                                                                  round(float(d['C_quality']), 1))
-                                elif ref == 'K':
-                                    ref_depth = 'G{0} T{1}/{2}'.format(d['G_depth'], d['T_depth'], d['total_depth'])
-                                    ref_qual = 'G{0} T{1}'.format(round(float(d['G_quality']), 1),
-                                                                  round(float(d['T_quality']), 1))
-                                elif ref == 'R':
-                                    ref_depth = 'A{0} G{1}/{2}'.format(d['A_depth'], d['G_depth'], d['total_depth'])
-                                    ref_qual = 'A{0} G{1}'.format(round(float(d['A_quality']), 1),
-                                                                  round(float(d['G_quality']), 1))
-                                elif ref == 'Y':
-                                    ref_depth = 'C{0} T{1}/{2}'.format(d['C_depth'], d['T_depth'], d['total_depth'])
-                                    ref_qual = 'C{0} T{1}'.format(round(float(d['C_quality']), 1),
-                                                                  round(float(d['T_quality']), 1))
-                                elif ref == 'B':
-                                    ref_depth = 'C{0} G{1} T{2}/{3}'.format(d['C_depth'], d['G_depth'], d['T_depth'],
-                                                                            d['total_depth'])
-                                    ref_qual = 'C{0} G{1} T{2}'.format(round(float(d['C_quality']), 1),
-                                                                       round(float(d['G_quality']), 1),
-                                                                       round(float(d['T_quality']), 1))
-                                elif ref == 'D':
-                                    ref_depth = 'A{0} G{1} T{2}/{3}'.format(d['A_depth'], d['G_depth'], d['T_depth'],
-                                                                            d['total_depth'])
-                                    ref_qual = 'A{0} G{1} T{2}'.format(round(float(d['A_quality']), 1),
-                                                                       round(float(d['G_quality']), 1),
-                                                                       round(float(d['T_quality']), 1))
-                                elif ref == 'H':
-                                    ref_depth = 'A{0} C{1} T{2}/{3}'.format(d['A_depth'],
-                                                                            d['C_depth'],
-                                                                            d['T_depth'], d['total_depth'])
-                                    ref_qual = 'A{0} C{1} T{2}'.format(round(float(d['A_quality']), 1),
-                                                                       round(float(d['C_quality']), 1),
-                                                                       round(float(d['T_quality']), 1))
-                                elif ref == 'V':
-                                    ref_depth = 'A{0} C{1} G{2}/{3}'.format(d['A_depth'], d['C_depth'], d['G_depth'],
-                                                                            d['total_depth'])
-                                    ref_qual = 'A{0} C{1} G{2}'.format(round(float(d['A_quality']), 1),
-                                                                       round(float(d['C_quality']), 1),
-                                                                       round(float(d['G_quality']), 1))
-                                else:
-                                    ref_depth = 'A{0} C{1} G{2} T{3}/{4}'.format(d['A_depth'], d['C_depth'],
-                                                                                 d['G_depth'], d['T_depth'],
-                                                                                 d['total_depth'])
-                                    ref_qual = 'A{0} C{1} G{2} T{3}'.format(round(float(d['A_quality']), 1),
-                                                                            round(float(d['C_quality']), 1),
-                                                                            round(float(d['G_quality']), 1),
-                                                                            round(float(d['T_quality']), 1))
-                                """
-
                             except KeyError:
                                 print('Position {0} in {1} for feature {2} with reference depth of 0!'
                                       .format(pos, data['qid'], data['tid']))
@@ -315,9 +256,13 @@ def cds_extract_quality_and_depth(bam_file, fas_file, dmnd_results, out_prefix, 
                                     depths.append(depth)
                                 base, qual, depth = 'p:{0}; f:{1}; b:{2}'.format(pos, strand, ref), ref_qual, ref_depth
                             else:
-                                base = base + ref
-                                depth = depth + ',' + ref_depth
-                                qual = qual + ',' + ref_qual
+                                if base == 0:
+                                    base, qual, depth = 'p:{0}; f:{1}; b:{2}'.format(pos, strand,
+                                                                                     ref), ref_qual, ref_depth
+                                else:
+                                    base = base + ref
+                                    depth = depth + ',' + ref_depth
+                                    qual = qual + ',' + ref_qual
 
                         if depth == 0:
                             continue
@@ -346,80 +291,6 @@ def cds_extract_quality_and_depth(bam_file, fas_file, dmnd_results, out_prefix, 
                                 else:
                                     continue
 
-                                # Commente par Aurelien BIRER "SAns doute un residus de vieux code"
-                                """
-                                elif ref == 'W':
-                                    ref_depth = 'A{0} T{1}/{2}'.format(d['A_depth'],
-                                                                       d['T_depth'],
-                                                                       d['total_depth'])
-                                    ref_qual = 'A{0} T{1}'.format(round(float(d['A_quality']), 1),
-                                                                  round(float(d['T_quality']), 1))
-                                elif ref == 'S':
-                                    ref_depth = 'C{0} G{1}/{2}'.format(d['C_depth'],
-                                                                       d['G_depth'],
-                                                                       d['total_depth'])
-                                    ref_qual = 'C{0} G{1}'.format(round(float(d['C_quality']), 1),
-                                                                  round(float(d['G_quality']), 1))
-                                elif ref == 'M':
-                                    ref_depth = 'A{0} C{1}/{2}'.format(d['A_depth'],
-                                                                       d['C_depth'],
-                                                                       d['total_depth'])
-                                    ref_qual = 'A{0} C{1}'.format(round(float(d['A_quality']), 1),
-                                                                  round(float(d['C_quality']), 1))
-                                elif ref == 'K':
-                                    ref_depth = 'G{0} T{1}/{2}'.format(d['G_depth'], d['T_depth'],
-                                                                       d['total_depth'])
-                                    ref_qual = 'G{0} T{1}'.format(round(float(d['G_quality']), 1),
-                                                                  round(float(d['T_quality']), 1))
-                                elif ref == 'R':
-                                    ref_depth = 'A{0} G{1}/{2}'.format(d['A_depth'], d['G_depth'],
-                                                                       d['total_depth'])
-                                    ref_qual = 'A{0} G{1}'.format(round(float(d['A_quality']), 1),
-                                                                  round(float(d['G_quality']), 1))
-                                elif ref == 'Y':
-                                    ref_depth = 'C{0} T{1}/{2}'.format(d['C_depth'], d['T_depth'],
-                                                                       d['total_depth'])
-                                    ref_qual = 'C{0} T{1}'.format(round(float(d['C_quality']), 1),
-                                                                  round(float(d['T_quality']), 1))
-                                elif ref == 'B':
-                                    ref_depth = 'C{0} G{1} T{2}/{3}'.format(d['C_depth'],
-                                                                            d['G_depth'],
-                                                                            d['T_depth'], d['total_depth'])
-                                    ref_qual = 'C{0} G{1} T{2}'.format(round(float(d['C_quality']), 1),
-                                                                       round(float(d['G_quality']), 1),
-                                                                       round(float(d['T_quality']), 1))
-                                elif ref == 'D':
-                                    ref_depth = 'A{0} G{1} T{2}/{3}'.format(d['A_depth'],
-                                                                            d['G_depth'],
-                                                                            d['T_depth'], d['total_depth'])
-                                    ref_qual = 'A{0} G{1} T{2}'.format(round(float(d['A_quality']), 1),
-                                                                       round(float(d['G_quality']), 1),
-                                                                       round(float(d['T_quality']), 1))
-                                elif ref == 'H':
-                                    ref_depth = 'A{0} C{1} T{2}/{3}'.format(d['A_depth'],
-                                                                            d['C_depth'],
-                                                                            d['T_depth'], d['total_depth'])
-                                    ref_qual = 'A{0} C{1} T{2}'.format(round(float(d['A_quality']), 1),
-                                                                       round(float(d['C_quality']), 1),
-                                                                       round(float(d['T_quality']), 1))
-                                elif ref == 'V':
-                                    ref_depth = 'A{0} C{1} G{2}/{3}'.format(d['A_depth'],
-                                                                            d['C_depth'],
-                                                                            d['G_depth'], d['total_depth'])
-                                    ref_qual = 'A{0} C{1} G{2}'.format(round(float(d['A_quality']), 1),
-                                                                       round(float(d['C_quality']), 1),
-                                                                       round(float(d['G_quality']), 1))
-                                else:
-                                    ref_depth = 'A{0} C{1} G{2} T{3}/{4}'.format(d['A_depth'],
-                                                                                 d['C_depth'],
-                                                                                 d['G_depth'],
-                                                                                 d['T_depth'], d['total_depth'])
-                                    ref_qual = 'A{0} C{1} G{2} T{3}'.format(round(float(d['A_quality']), 1),
-                                                                            round(float(d['C_quality']), 1),
-                                                                            round(float(d['G_quality']), 1),
-                                                                            round(float(d['T_quality']), 1))
-                                """
-
                             except KeyError:
                                 print('Position {0} in {1} for feature {2} with reference depth of 0!'
                                       .format(pos, data['qid'], data['tid']))
@@ -434,9 +305,13 @@ def cds_extract_quality_and_depth(bam_file, fas_file, dmnd_results, out_prefix, 
                                     depths.append(depth)
                                 base, qual, depth = 'p:{0}; f:{1}; b:{2}'.format(pos, strand, ref), ref_qual, ref_depth
                             else:
-                                base = base + ref
-                                depth = depth + ',' + ref_depth
-                                qual = qual + ',' + ref_qual
+                                if base == 0:
+                                    base, qual, depth = 'p:{0}; f:{1}; b:{2}'.format(pos, strand,
+                                                                                     ref), ref_qual, ref_depth
+                                else:
+                                    base = base + ref
+                                    depth = depth + ',' + ref_depth
+                                    qual = qual + ',' + ref_qual
 
                         if depth == 0:
                             continue
