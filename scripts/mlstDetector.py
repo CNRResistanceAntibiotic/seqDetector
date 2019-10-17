@@ -261,6 +261,9 @@ def read_mlst_scheme(mlst_scheme_file, sep='\t', mlst_size=8):
                 mlst_name = line[0]
                 mlst_barcode = ' '.join(line[1:mlst_size + 1])
                 mlst_dic[mlst_barcode] = mlst_name
+    # remove alternative information
+    if "clonal_complex" in mlst_present_list:
+        mlst_present_list.remove("clonal_complex")
     return mlst_dic, mlst_present_list
 
 
