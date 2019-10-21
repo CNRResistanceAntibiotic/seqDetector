@@ -276,7 +276,7 @@ def identify_mlst_profile(mlst_dic, mlst_list, blastn_results, id_prefix, out_pr
         found = 0
         for data in blastn_results:
             tid = data['tid']
-            motif = re.compile('(^[A-Za-z_]+)[-_.]([0-9]+$)')
+            motif = re.compile('(^[A-Za-z0-9_]+)[-_.]([0-9]+$)')
             match = motif.match(tid)
             if match:
                 gene, allele = match.groups()
