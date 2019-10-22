@@ -252,18 +252,27 @@ def write_gbk(results, query_dic, out_dir, out_prefix):
 def read_mlst_scheme(mlst_scheme_file, sep='\t', mlst_size=8):
     mlst_dic = {}
     mlst_present_list = []
+    found_clonal_complex = False
+    found_species = False
     with open(mlst_scheme_file) as in_f:
         for n, line in enumerate(in_f):
             if n == 0:
                 mlst_present_list = line.strip().split(sep)[1:mlst_size + 1]
+                #  remove alternative information
+                if "clonal_complex" in mlst_present_list:
+                    mlst_present_list.remove("clonal_complex")
+                    found_clonal_complex = True
+                if "species" in mlst_present_list:
+                    mlst_present_list.remove("species")
+                    found_species = True
             else:
                 line = line.strip().split(sep)
                 mlst_name = line[0]
-                mlst_barcode = ' '.join(line[1:mlst_size + 1])
+                # treat mlst list with mlst schema name len
+                list_mlst = line[1:len(mlst_present_list)+2]
+                mlst_barcode = ' '.join(list_mlst)
                 mlst_dic[mlst_barcode] = mlst_name
-    # remove alternative information
-    if "clonal_complex" in mlst_present_list:
-        mlst_present_list.remove("clonal_complex")
+
     return mlst_dic, mlst_present_list
 
 
@@ -296,6 +305,7 @@ def identify_mlst_profile(mlst_dic, mlst_list, blastn_results, id_prefix, out_pr
                             barcode = allele
         if found == 0:
             mlst_barcode.append(barcode + '?')
+
     if ' '.join(mlst_barcode) in mlst_dic:
         ST = mlst_dic[' '.join(mlst_barcode)]
     else:
