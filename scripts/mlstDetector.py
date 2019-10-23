@@ -270,7 +270,9 @@ def read_mlst_scheme(mlst_scheme_file, sep='\t', mlst_size=8):
                 mlst_name = line[0]
                 # treat mlst list with mlst schema name len
                 list_mlst = line[1:len(mlst_present_list)+2]
+                list_mlst = list(filter(None, list_mlst))
                 mlst_barcode = ' '.join(list_mlst)
+
                 mlst_dic[mlst_barcode] = mlst_name
 
     return mlst_dic, mlst_present_list
@@ -310,6 +312,8 @@ def identify_mlst_profile(mlst_dic, mlst_list, blastn_results, id_prefix, out_pr
         ST = mlst_dic[' '.join(mlst_barcode)]
     else:
         ST = '?'
+
+
 
     zipped = zip(mlst_list, mlst_barcode)
     zip_list = list(map(list, zipped))
