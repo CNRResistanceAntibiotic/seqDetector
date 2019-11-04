@@ -313,8 +313,6 @@ def identify_mlst_profile(mlst_dic, mlst_list, blastn_results, id_prefix, out_pr
     else:
         ST = '?'
 
-
-
     zipped = zip(mlst_list, mlst_barcode)
     zip_list = list(map(list, zipped))
 
@@ -492,12 +490,13 @@ def main(args):
     print("\nSearch the assembly files:")
     file_list = []
     for sample_name in sample_dic.keys():
+        assembly_file = ""
         try:
-            sample_file = glob.glob(os.path.join(wk_dir, sample_name + '.fasta'))[0]
-            file_list.append(sample_file)
-            print('Sample {0}: {1}'.format(sample_name, sample_file))
+            assembly_file = glob.glob(os.path.join(wk_dir, sample_name + '.fasta'))[0]
+            file_list.append(assembly_file)
+            print('Sample {0}: {1}'.format(sample_name, assembly_file))
         except IndexError:
-            print('Sample {0}: file not found!'.format(sample_name))
+            print('Sample {0}: Assembly file not found! Search For {1}'.format(sample_name, assembly_file))
 
     # Check the location of MLST file:
     set_file = args.set_file
@@ -602,14 +601,17 @@ def main(args):
                 exit(1)
 
             query_dic = {}
+
+            if args.out_prefix == '':
+                out_prefix = mlst_name
+            else:
+                out_prefix = args.out_prefix
+
             if len(blastn_results) > 0:
                 query_dic = load_fasta(query_file)
                 # Set the prefix of the output
                 print('')
-                if args.out_prefix == '':
-                    out_prefix = mlst_name
-                else:
-                    out_prefix = args.out_prefix
+
                 # Global alignement of DNA and mutation extraction if DNA features detected
                 target_dic = load_fasta(dna_target_file)
                 blastn_results = dna_global_alignemnt(blastn_results, query_dic, target_dic, pass_pid, pass_pcv)
@@ -618,6 +620,8 @@ def main(args):
                     blastn_results = dna_extract_quality_and_depth(bam_file, query_file, blastn_results, out_prefix, force)
                 # Show the detected DNA features
                 view_dna_result(blastn_results)
+
+
 
             # Set the directory to store depth and quality data
             mut_dir = os.path.join(os.path.dirname(bam_file), 'Mutations_depth_quality_{0}'.format(schema))
@@ -633,6 +637,7 @@ def main(args):
 
                 # Identify ST from MLST profils
                 print('Number of MLST profiles: {0} for genes: {1}\n'.format(len(mlst_dic.keys()), ', '.join(mlst_present_list)))
+
                 identify_mlst_profile(mlst_dic, mlst_present_list, blastn_results, mlst_id_prefix, out_prefix)
 
             if len(blastn_results) > 0:
