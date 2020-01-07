@@ -874,8 +874,11 @@ def main(args):
 
             if n >= 2:
                 # remove file
-                os.remove(out_diamond_file)
-                os.remove(out_blastn_file)
+                if os.path.exists(out_diamond_file):
+                    os.remove(out_diamond_file)
+
+                if os.path.exists(out_blastn_file):
+                    os.remove(out_blastn_file)
 
                 shutil.rmtree(out_dir)
                 shutil.rmtree(mut_dir)

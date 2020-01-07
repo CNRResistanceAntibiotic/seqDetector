@@ -22,6 +22,7 @@ def run_blastn(blastn_db, query_file, pass_pid=70, force=True, evalue=0.0001, th
 
     if not force and os.path.exists(out_file):
         print('\nResult file {0} already exists'.format(out_file))
+
     else:
         fmt = '\"6 qseqid frames sallseqid slen qstart qend sstart send length pident nident ppos positive mismatch ' \
               'gapopen gaps qseq sseq\"'
