@@ -777,7 +777,6 @@ def main(args):
             dmnd_result_file = run_diam(dmnd_db, query_file, pass_pid, pass_pcv, threads, force, out_diamond_file)
             dmnd_results = load_dmnd_result(dmnd_result_file, cds_target_file)
 
-
         else:
             print('No CDS to search')
             dmnd_results = []

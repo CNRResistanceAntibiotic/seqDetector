@@ -324,7 +324,10 @@ def extract_substitutions(data, wk_dir):
     # extract mutations from alignment
     unclassified_subs = []
     known_snps = known_snps.split(',')
-    known_pos = list(set([int(x[1:len(x) - 1]) for x in known_snps if re.match('[A-Zi][0-9]+[A-Zd]', x)]))
+    known_pos = ""
+    for x in known_snps:
+        if re.match('[A-Zi][0-9]+[A-Zd]', x) and "STOP" not in x and "DEL" not in x:
+            known_pos = list(set([int(x[1:len(x) - 1])]))
     indel = 0
     for i in dif_indexes:
         t_prot_pos = i + 1 - t_seq.seq[0:i].count('-')

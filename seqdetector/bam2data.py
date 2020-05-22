@@ -44,7 +44,6 @@ def bam_count(bam_file, fasta_ref, output_dir, q=0, b=0, feature_name='', site_f
         out_file = os.path.join(output_dir, '{0}_{1}_raw.csv'.format(sample, feature_name))
         cmd = '$(which bam-readcount) -w 0 -q {0} -b {1} -i -l {2} -f {3} {4} > {5}'.format(q, b, site_file, fasta_ref,
                                                                                       bam_file, out_file)
-
     if not os.path.exists(out_file) or force:
         process = Popen(cmd, shell=True, stdout=PIPE, stderr=STDOUT).stdout.read()
         log_info = "Command line executed: {0}\n\n\n{1}".format(cmd, process.decode("utf-8"))
@@ -75,7 +74,6 @@ def bam_count_stats(bam_count_file, feature_name, header, output_dir, bam_file):
         out_file = os.path.join(output_dir, '{0}_{1}_stats'.format(sample, 'whole_genome'))
     else:
         out_file = os.path.join(output_dir, '{0}_{1}_stats'.format(sample, feature_name))
-
     with open(bam_count_file) as count_f:
         ctgs = []
         result_stat = []
