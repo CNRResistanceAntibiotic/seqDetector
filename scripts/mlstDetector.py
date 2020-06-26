@@ -269,7 +269,7 @@ def read_mlst_scheme(mlst_scheme_file, sep='\t', mlst_size=8):
                 line = line.strip().split(sep)
                 mlst_name = line[0]
                 # treat mlst list with mlst schema name len
-                list_mlst = line[1:len(mlst_present_list)+2]
+                list_mlst = line[1:len(mlst_present_list)+1]
                 list_mlst = list(filter(None, list_mlst))
                 mlst_barcode = ' '.join(list_mlst)
 
