@@ -74,6 +74,7 @@ def load_dmnd_result(result_file, target_file):
             for item in ['pid', 'ppos']:
                 data[item] = round(float(data[item]), 2)
             data['pcv'] = round(100 * len(data['tseq'].replace('-', '')) / float(len(data['fulltseq'])), 2)
+            data['tseq'] = "-"
             dmnd_results.append(data)
 
     print("***** End loading Diamond Result *****\n")

@@ -327,5 +327,4 @@ def cds_extract_quality_and_depth(bam_file, fas_file, dmnd_results, out_prefix, 
                     else:
                         txt = ''
                     snp['dna_data'] = txt
-
     return dmnd_results
