@@ -732,10 +732,15 @@ def main(args):
 
     database_split = os.path.basename(cds_target_file).split(".")[0].split("_")
 
-    # Print version and subset database
-    print("\nList ARM-DB Subset: {0}\n".format(database_split[2]))
+    if "dbVIR" in dna_target_file:
+        database = "VIR"
+    elif "dbARM" in dna_target_file:
+        database = "ARM"
 
-    print("\nVersion ARM-DB: {0}\n".format(database_split[1]))
+    # Print version and subset database
+    print("\nList {1}-DB Subset: {0}\n".format(database_split[2], database))
+
+    print("\nVersion {1}-DB: {0}\n".format(database_split[1], database))
 
     print("\nFeature detection parameters:")
     pass_pid = float(args.perc_id)
