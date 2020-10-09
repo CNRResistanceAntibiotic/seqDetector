@@ -12,7 +12,6 @@ from collections import OrderedDict
 
 import pandas as pd
 from Bio import SeqIO
-from Bio.Alphabet.IUPAC import IUPACAmbiguousDNA
 from Bio.Seq import Seq
 from Bio.SeqFeature import FeatureLocation
 from Bio.SeqFeature import SeqFeature
@@ -562,9 +561,9 @@ def description(data):
 def test_cds(data):
     test = 1
     if data['strand'] > 0:
-        q_dna_seq = Seq(str(data['qseq']).replace('-', ''), IUPACAmbiguousDNA())
+        q_dna_seq = Seq(str(data['qseq']).replace('-', ''))
     else:
-        q_dna_seq = Seq(str(data['qseq']).replace('-', ''), IUPACAmbiguousDNA()).reverse_complement()
+        q_dna_seq = Seq(str(data['qseq']).replace('-', '')).reverse_complement()
     try:
         x = q_dna_seq.translate(table='Bacterial', cds=True)
     except Exception as e:
@@ -622,7 +621,7 @@ def write_gbk(results, query_dic, out_dir, out_prefix):
     n = 0
     for key in keys:
         records = rec_dic[key]
-        rec = SeqRecord(Seq(str(query_dic[key].seq), IUPACAmbiguousDNA()), id=key, name=key, description='')
+        rec = SeqRecord(Seq(str(query_dic[key].seq)), id=key, name=key, description='')
         for data in records:
             if test_cds(data) == 1:
                 feature = SeqFeature(FeatureLocation(data['qstart'] - 1, data['qend'], strand=data['strand']),
@@ -771,7 +770,7 @@ def main(args):
             taxonomy_filter_detect = 'none'
             print('No taxonomy provided: none taxonomy filtering will be perfomed')
 
-        out_diamond_file = os.path.join(os.path.dirname(query_file), 'diam_output.csv')
+        out_diamond_file = os.path.join(os.path.dirname(query_file), 'diam_output_{0}.csv'.format(sample_name))
         # Launch CDS detection
         if os.path.exists(cds_target_file) and cds_process:
             dmnd_db = make_dmnd_database(cds_target_file, force)

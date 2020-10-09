@@ -6,7 +6,6 @@ from collections import OrderedDict
 from Bio import SeqIO
 from Bio.Seq import Seq
 from Bio.SeqRecord import SeqRecord
-from Bio.Alphabet.IUPAC import IUPACAmbiguousDNA
 import pandas as pd
 from Bio.SeqFeature import FeatureLocation
 from Bio.SeqFeature import SeqFeature
@@ -201,7 +200,13 @@ def write_fasta(results, out_dir, out_prefix):
             aa_records = sorted(dna_records, key=lambda x: (int(x.id.split('_')[1]) * 1E8 + int(x.id.split('__')[1])))
             SeqIO.write(aa_records, aa_out_f, 'fasta')
         if dna_records:
-            dna_records = sorted(dna_records, key=lambda x: (int(x.id.split('_')[1]) * 1E8 + int(x.id.split('__')[1])))
+            sorted_pivot = True
+            # case of non "ctg_1" format
+            for dna in dna_records:
+                if len(dna.id.split('_')[1]) == 0:
+                    sorted_pivot = False
+            if sorted_pivot:
+                dna_records = sorted(dna_records, key=lambda x: (int(x.id.split('_')[1]) * 1E8 + int(x.id.split('__')[1])))
             SeqIO.write(dna_records, dna_out_f, 'fasta')
 
 
@@ -219,7 +224,7 @@ def write_gbk(results, query_dic, out_dir, out_prefix):
     n = 0
     for key in keys:
         records = rec_dic[key]
-        rec = SeqRecord(Seq(str(query_dic[key].seq), IUPACAmbiguousDNA()), id=key, name=key, description='')
+        rec = SeqRecord(Seq(str(query_dic[key].seq)), id=key, name=key, description='')
         # source = ''
         for data in records:
 
@@ -496,6 +501,7 @@ def main(args):
             file_list.append(assembly_file)
             print('Sample {0}: {1}'.format(sample_name, assembly_file))
         except IndexError:
+            assembly_file = glob.glob(os.path.join(wk_dir, sample_name + '.fasta'))[0]
             print('Sample {0}: Assembly file not found! Search For {1}'.format(sample_name, assembly_file))
 
     # Check the location of MLST file:
@@ -580,7 +586,8 @@ def main(args):
             # Make blastn database, launch blastn and load the results
             blastn_results = []
 
-            out_blastn_file = os.path.join(os.path.dirname(query_file), 'blastn_output_{0}.csv'.format(schema))
+            out_blastn_file = os.path.join(os.path.dirname(query_file), 'blastn_output_{0}_{1}.csv'
+                                           .format(schema, sample_name))
 
             if os.path.exists(dna_target_file):
                 blastn_db = make_blastn_database(dna_target_file, force)

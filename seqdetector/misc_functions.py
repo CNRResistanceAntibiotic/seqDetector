@@ -7,7 +7,6 @@ from collections import OrderedDict
 from shutil import rmtree
 
 from Bio import SeqIO
-from Bio.Alphabet.IUPAC import ExtendedIUPACProtein, IUPACAmbiguousDNA
 from Bio.Seq import Seq
 from Bio.SeqRecord import SeqRecord
 
@@ -160,7 +159,6 @@ def cds_global_alignment(dmnd_results, query_dic, wk_dir, pass_pid, pass_pcv):
                     data['qseq'] = str(q_seq[data['qstart'] - 1:data['qend']].seq)
                     # print data['qseq']
 
-
         data = extract_substitutions(data, wk_dir)
 
     # remove entry by their new pid and pcov
@@ -243,12 +241,12 @@ def extract_substitutions(data, wk_dir):
             print(e)
             if len([x for x in list(set(q_seq)) if x.upper() not in ['A', 'T', 'C', 'G']]) > 0:
                 try:
-                    q_seq = Seq(q_seq, IUPACAmbiguousDNA()).translate(table='Bacterial', cds=True)
+                    q_seq = Seq(q_seq).translate(table='Bacterial', cds=True)
                 except Exception as e:
                     print(e)
-                    q_seq = Seq(q_seq, IUPACAmbiguousDNA()).translate(table='Bacterial', cds=False)
+                    q_seq = Seq(q_seq).translate(table='Bacterial', cds=False)
             else:
-                q_seq = Seq(q_seq, IUPACAmbiguousDNA()).translate(table='Bacterial', cds=False)
+                q_seq = Seq(q_seq).translate(table='Bacterial', cds=False)
     else:
         try:
             q_seq = Seq(q_seq).reverse_complement().translate(table='Bacterial', cds=True)
@@ -256,10 +254,10 @@ def extract_substitutions(data, wk_dir):
             print(e)
             if len([x for x in list(set(q_seq)) if x.upper() not in ['A', 'T', 'C', 'G']]) > 0:
                 try:
-                    q_seq = Seq(q_seq, IUPACAmbiguousDNA()).reverse_complement().translate(table='Bacterial', cds=True)
+                    q_seq = Seq(q_seq).reverse_complement().translate(table='Bacterial', cds=True)
                 except Exception as e:
                     print(e)
-                    q_seq = Seq(q_seq, IUPACAmbiguousDNA()).reverse_complement().translate(table='Bacterial', cds=False)
+                    q_seq = Seq(q_seq).reverse_complement().translate(table='Bacterial', cds=False)
             else:
                 q_seq = Seq(q_seq).reverse_complement().translate(table='Bacterial', cds=False)
 
@@ -268,7 +266,7 @@ def extract_substitutions(data, wk_dir):
         t_seq = Seq(t_seq)
     except Exception as e:
         print(e)
-        t_seq = Seq(t_seq, ExtendedIUPACProtein)
+        t_seq = Seq(t_seq)
 
     # Generate alignment with clustalo
     records = []
