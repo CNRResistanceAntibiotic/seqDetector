@@ -24,7 +24,6 @@ from seqdetector.misc_functions import load_fasta, make_dmnd_database, dna_globa
 
 
 def run_diam(dmnd_db, query_file, pass_pid=70, pass_pcv=70, threads=8, force=True, out_file=""):
-
     if not force and os.path.exists(out_file):
         print('\nResult file {0} already exists'.format(out_file))
     else:
@@ -41,9 +40,9 @@ def load_dmnd_result(result_file, target_file):
     print("\n***** Start loading Diamond Result *****")
     target_dic = load_fasta(target_file)
     dmnd_results = []
-    header = 'qid strand tid tlen qstart qend tstart tend ' \
-             'alen pid nid ppos npos mismatch gapopen gap ' \
-             'qseq tseq fulltseq'.split(' ')
+    header = ['qid', 'strand', 'tid', 'tlen', 'qstart', 'qend', 'tstart', 'tend', 'alen', 'pid', 'nid', 'ppos', 'npos',
+              'mismatch', 'gapopen', 'gap', 'qseq', 'tseq', 'fulltseq']
+
     with open(result_file) as inf:
         for line in inf:
             data = dict(zip(header, line.strip().split('\t')))
@@ -95,8 +94,8 @@ def overlap_filter(results, taxonomy, pass_overlap=50):
         # print ctg, len(subset_result.keys()), len(comparisons)
         del_list = []
         for data1, data2 in comparisons:
-
             if subset_results.index(data1) not in del_list and subset_results.index(data2) not in del_list:
+
                 qid1 = data1['qid']
                 tid1 = data1['tid']
                 pos1 = range(data1['qstart'], data1['qend'] + 1)
@@ -108,6 +107,18 @@ def overlap_filter(results, taxonomy, pass_overlap=50):
                     pattern = re.compile('.+_\[(.+)\]::.+')
                     match1 = pattern.match(tid1)
                     match2 = pattern.match(tid2)
+
+                    # case to save mutation in ARM gene (mutation give supplementary resistance)
+                    if "known_prot_snp" in data1 and "known_prot_snp" in data2:
+                        if len(data1["known_prot_snp"]) >= 1 and len(data2["known_prot_snp"]) == 0:
+                            continue
+                        elif len(data2["known_prot_snp"]) >= 1 and len(data1["known_prot_snp"]) == 0:
+                            continue
+                    elif "known_dna_snp" in data1 and "known_dna_snp" in data2:
+                        if len(data1["known_dna_snp"]) >= 1 and len(data2["known_dna_snp"]) == 0:
+                            continue
+                        elif len(data2["known_dna_snp"]) >= 1 and len(data1["known_dna_snp"]) == 0:
+                            continue
 
                     if match1 and match2 and taxonomy != '':
                         if taxonomy.lower() in match1.groups()[0].lower() and \
@@ -142,9 +153,7 @@ def overlap_filter(results, taxonomy, pass_overlap=50):
         del_list.reverse()
         for item in del_list:
             del subset_results[item]
-
         filtered_results = filtered_results + subset_results
-
     return filtered_results
 
 
@@ -290,12 +299,9 @@ def dna_data_to_dict(id, d, dna_data, item):
 
 def write_csv_html(merged_results, mut_prefix, id_prefix, pass_alarm_qual=20, pass_alarm_depth=30, pass_alarm_frac=0.9):
 
-    header = ['Function', 'DBase name', '% ident', '% cov', 'Sequence Warning',
-              'Min depth', 'Mean depth', 'Max depth',
-              'Min qual', 'Mean qual', 'Max qual',
-              'SNP', 'SUB', 'Known prot SNP', 'Known DNA SNP',
-              'DBase start', 'DBase end', 'DBase length',
-              'Query name', 'Query start', 'Query end', 'Query strand', 'Query length',
+    header = ['Function', 'DBase name', '% ident', '% cov', 'Sequence Warning', 'Min depth', 'Mean depth', 'Max depth',
+              'Min qual', 'Mean qual', 'Max qual', 'SNP', 'SUB', 'Known prot SNP', 'Known DNA SNP', 'DBase start',
+              'DBase end', 'DBase length', 'Query name', 'Query start', 'Query end', 'Query strand', 'Query length',
               'Query DNA seq', 'Query prot seq', 'DBase dna seq', 'DBase prot seq']
     records = []
     for data in merged_results:
@@ -553,8 +559,8 @@ def description(data):
                     data['max_qual'], snps)
     except KeyError:
         des = 'function:{0}, mechanism:{1}, reference_sequence: {2}, perc_identity:{3}, perc_coverage:{4}, ' \
-              'known_sub:{5}'.format(data['func'], data['mech'], data['tid'].split('::')[-1], \
-                                    data['pid'], data['pcv'], snps)
+              'known_sub:{5}'.format(data['func'], data['mech'], data['tid'].split('::')[-1],
+                                     data['pid'], data['pcv'], snps)
     return des
 
 
@@ -658,11 +664,8 @@ def write_gbk(results, query_dic, out_dir, out_prefix):
 
 
 def main(args):
-
     print("Version diamDetector: {0}\n".format(version()))
-
     wk_dir = args.wkdir
-
     # Check working directory
     if glob.glob(wk_dir) is None:
         print("\nDirectory {0} not found!\n".format(wk_dir))
@@ -705,7 +708,7 @@ def main(args):
     cds_process = True
     cds_target_file = os.path.abspath(args.cds_target_file)
     if os.path.exists(cds_target_file):
-        if os.stat(cds_target_file).st_size == 0 :
+        if os.stat(cds_target_file).st_size == 0:
             print("  CDS database {0} found but EMPTY !!!!!!!!".format(cds_target_file))
             cds_process = False
         else:
@@ -732,6 +735,7 @@ def main(args):
 
     database_split = os.path.basename(cds_target_file).split(".")[0].split("_")
 
+    database = ""
     if "dbVIR" in dna_target_file:
         database = "VIR"
     elif "dbARM" in dna_target_file:
@@ -739,7 +743,6 @@ def main(args):
 
     # Print version and subset database
     print("\nList {1}-DB Subset: {0}\n".format(database_split[2], database))
-
     print("\nVersion {1}-DB: {0}\n".format(database_split[1], database))
 
     print("\nFeature detection parameters:")
@@ -774,7 +777,7 @@ def main(args):
             taxonomy_filter_detect = 'lax'
         if taxonomy == 'No taxonomy provided':
             taxonomy_filter_detect = 'none'
-            print('No taxonomy provided: none taxonomy filtering will be perfomed')
+            print('No taxonomy provided: none taxonomy filtering will be performed')
 
         out_diamond_file = os.path.join(os.path.dirname(query_file), 'diam_output_{0}.csv'.format(sample_name))
         # Launch CDS detection
@@ -808,9 +811,7 @@ def main(args):
                 len(dmnd_results) + len(blastn_results)))
 
         if taxonomy_filter_detect == 'lax':
-
             dmnd_results = overlap_filter(dmnd_results, taxonomy, pass_overlap)
-
             print('\nNumber of detected features after lax taxonomic and overlap filtering: {0} \n'.format(
                 len(dmnd_results)))
             blastn_results = overlap_filter(blastn_results, taxonomy, pass_overlap)
@@ -818,14 +819,10 @@ def main(args):
                   .format(len(blastn_results)))
             print('\n######## Number of detected features after lax taxonomic and overlap filtering: {0} ########'
                   .format(len(dmnd_results) + len(blastn_results)))
-
         else:
             dmnd_results = overlap_filter(dmnd_results, '', pass_overlap)
-
             blastn_results = overlap_filter(blastn_results, '', pass_overlap)
-            print('Number of detected features after overlap filtering: {0}'.format(
-                len(dmnd_results) + len(blastn_results)))
-
+            print(f'Number of detected features after overlap filtering: {len(dmnd_results) + len(blastn_results)}')
         print('')
 
         # Set the prefix of the output
@@ -838,7 +835,6 @@ def main(args):
         if len(dmnd_results) > 0:
             # Global alignment of CDS and mutation extraction if CDS features detected
             dmnd_results = cds_global_alignment(dmnd_results, query_dic, wk_dir, pass_pid, pass_pcv)
-
             if os.path.exists(bam_file):
                 # Extraction quality of bases and sequencing depth if bam detected
                 dmnd_results = cds_extract_quality_and_depth(bam_file, query_file, dmnd_results, out_prefix, force)
@@ -881,10 +877,8 @@ def main(args):
                 # remove file
                 if os.path.exists(out_diamond_file):
                     os.remove(out_diamond_file)
-
                 if os.path.exists(out_blastn_file):
                     os.remove(out_blastn_file)
-
                 shutil.rmtree(out_dir)
                 shutil.rmtree(mut_dir)
         else:

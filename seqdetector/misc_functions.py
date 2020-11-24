@@ -70,20 +70,17 @@ def read_bam_stat(filename):
 def make_dmnd_database(fasta_file, force=False, threads=8):
     dmnd_db = os.path.splitext(fasta_file)[0]
     if os.path.exists(dmnd_db + ".dmnd") and not force:
-        print('\nDatabase {0} already exists'.format(dmnd_db))
+        print(f'\nDatabase {dmnd_db} already exists')
     else:
-        process = subprocess.Popen('$(which diamond) makedb -p {0} --in {1} -d {2}'
-                                   .format(threads, fasta_file, dmnd_db),
+        process = subprocess.Popen(f'$(which diamond) makedb -p {threads} --in {fasta_file} -d {dmnd_db}',
                                    shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT).stdout.read()
-        print("\n{0}\n".format(process.decode("utf-8")))
+        print(f"\n{process.decode('utf-8')}\n")
 
     return dmnd_db
 
 
 def cds_global_alignment(dmnd_results, query_dic, wk_dir, pass_pid, pass_pcv):
-
     for data in dmnd_results:
-
         q_seq = query_dic[data['qid']]
         # print '\n', data['tid'], data['strand'], data['tlen'], data['tstart'], data['tend']
         if data['strand'] > 0:
@@ -164,7 +161,7 @@ def cds_global_alignment(dmnd_results, query_dic, wk_dir, pass_pid, pass_pcv):
     # remove entry by their new pid and pcov
     for item in dmnd_results:
         if float(item['pid']) < pass_pid or float(item['pcv']) < pass_pcv:
-            print("Entry removed by cause of low identity or coverage: {0}".format(item))
+            print(f"Entry removed by cause of low identity or coverage: {item}")
             dmnd_results.remove(item)
 
     return dmnd_results
@@ -282,11 +279,10 @@ def extract_substitutions(data, wk_dir):
     out_file = os.path.join(tmp_clustalo_path, 'tmp.clu')
     with open(in_file, 'w') as in_f:
         SeqIO.write(records, in_f, 'fasta')
-    cmd = "$(which clustalo) -i {0} -o {1} --outfmt=fa --force".format(in_file, out_file)
+    cmd = f"$(which clustalo) -i {in_file} -o {out_file} --outfmt=fa --force"
 
     process = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT).stdout.read()
     #print("\n{0}\n{1}\n".format(cmd, process.decode("utf-8")))
-
 
     # parse alignment
     records = []
@@ -312,7 +308,6 @@ def extract_substitutions(data, wk_dir):
     nid = len(t_seq.seq) - mismatch
 
     pid = round(100 * nid / float(len(t_seq.seq)), 2)
-
     pcv = round(100 * len(str(q_seq.seq).replace('-', '').replace('*', '')) /
                 float(len(str(t_seq.seq).replace('-', ''))), 2)
 
@@ -378,11 +373,11 @@ def extract_substitutions(data, wk_dir):
     if known_snps != ['']:
         for m in unclassified_subs:
             if m['t_prot_pos'] in known_pos:
-                item = '{0}{1}{2}'.format(m['t_aa'], m['t_prot_pos'], m['q_aa'])
+                item = f'{m["t_aa"]}{m["t_prot_pos"]}{m["q_aa"]}'
                 if item in known_snps:
                     snps.append(m)
                 else:
-                    m['q_aa'] = '[{0}]'.format(m['q_aa'])
+                    m['q_aa'] = f'[{m["q_aa"]}]'
                     snps.append(m)
             else:
                 subs.append(m)
@@ -404,14 +399,8 @@ def extract_substitutions(data, wk_dir):
 
 
 def reverse_complement(dna_seq):
-    cpl_dic = {'-': '-', 'N': 'N',
-               'A': 'T', 'T': 'A',
-               'C': 'G', 'G': 'C',
-               'S': 'S', 'W': 'W',
-               'D': 'H', 'H': 'D',
-               'K': 'M', 'M': 'K',
-               'Y': 'R', 'R': 'Y',
-               'B': 'V', 'V': 'B'}
+    cpl_dic = {'-': '-', 'N': 'N', 'A': 'T', 'T': 'A', 'C': 'G', 'G': 'C', 'S': 'S', 'W': 'W', 'D': 'H', 'H': 'D',
+               'K': 'M', 'M': 'K', 'Y': 'R', 'R': 'Y', 'B': 'V', 'V': 'B'}
     dna_seq = list(str(dna_seq).upper())
     size = len(dna_seq)
     rev_cplt = []
@@ -480,7 +469,7 @@ def dna_global_alignemnt(blastn_results, query_dic, target_dic, pass_pid, pass_p
     # remove entry by their new pid and pcov
     for item in blastn_results:
         if float(item['pid']) < pass_pid or float(item['pcv']) < pass_pcv:
-            print("Entry removed by cause of low identity or coverage: {0}".format(item))
+            print(f"Entry removed by cause of low identity or coverage: {item}")
             blastn_results.remove(item)
     return blastn_results
 
@@ -517,8 +506,7 @@ def extract_mutations(data):
     if indel == 1:
         pre_pos, pre_query, pre_target = 0, '', ''
         index_dels = []
-        open_insertion_index = ""
-        open_deletion_index = ""
+        open_insertion_index = open_deletion_index = ""
         for n, d in enumerate(muts):
             target = d['t_base']
             pos = d['a_dna_pos']
@@ -549,11 +537,11 @@ def extract_mutations(data):
     if known_snps != ['']:
         for m in muts:
             if m['t_dna_pos'] in known_pos:
-                item = '{0}{1}{2}'.format(m['t_base'], m['t_dna_pos'], m['q_base'])
+                item = f'{m["t_base"]}{m["t_dna_pos"]}{m["q_base"]}'
                 if item in known_snps:
                     snps.append(m)
                 else:
-                    m['q_base'] = '[{0}]'.format(m['q_base'])
+                    m['q_base'] = f'[{m["q_base"]}]'
                     snps.append(m)
             else:
                 subs.append(m)
@@ -568,7 +556,6 @@ def extract_mutations(data):
 
 def read_bam_count(filename, depth_pass=20, qual_pass=20, fraction_pass=0.8):
     with open(filename) as tsv_file:
-
         reader = csv.DictReader(tsv_file, delimiter='\t')
         result = {}
         alarm = []
@@ -585,17 +572,17 @@ def read_bam_count(filename, depth_pass=20, qual_pass=20, fraction_pass=0.8):
             total_depth = int(row['total_depth'])
             cmt = []
             if ref in ['A', 'T', 'C', 'G']:
-                base_depth = int(row['{0}_depth'.format(ref)])
+                base_depth = int(row[f'{ref}_depth'])
                 allele_fraction = round(base_depth / float(total_depth), 2)
-                base_qual = float(row['{0}_quality'.format(ref)])
+                base_qual = float(row[f'{ref}_quality'])
                 if base_depth < depth_pass:
-                    cmt.append('D{0}={1}'.format(position, base_depth))
+                    cmt.append(f'D{position}={base_depth}')
                 if allele_fraction < fraction_pass:
-                    cmt.append('F{0}={1}'.format(position, allele_fraction))
+                    cmt.append(f'F{position}={allele_fraction}')
                 if base_qual < qual_pass:
-                    cmt.append('Q{0}={1}'.format(position, base_qual))
+                    cmt.append(f'Q{position}={base_qual}')
             else:
-                cmt.append('{0}{1}'.format(ref, position))
+                cmt.append(f'{ref}{position}')
 
             cmt = ','.join(cmt)
             if cmt != '':
