@@ -25,14 +25,14 @@ from seqdetector.misc_functions import load_fasta, make_dmnd_database, dna_globa
 
 def run_diam(dmnd_db, query_file, pass_pid=70, pass_pcv=70, threads=8, force=True, out_file=""):
     if not force and os.path.exists(out_file):
-        print('\nResult file {0} already exists'.format(out_file))
+        print(f'\nResult file {out_file} already exists')
     else:
         fmt = '6 qseqid qframe sseqid slen qstart qend sstart send length pident nident ppos positive mismatch ' \
               'gapopen gaps qseq sseq full_sseq'
-        cmd = "$(which diamond) blastx --more-sensitive -k 0 -p {0} -d {1} -q {2} --id {3} --subject-cover {4} " \
-              "-f {5} -o {6} --masking no".format(threads, dmnd_db, query_file, pass_pid, pass_pcv, fmt, out_file)
+        cmd = f"$(which diamond) blastx --more-sensitive -k 0 -p {threads} -d {dmnd_db} -q {query_file}" \
+              f" --id {pass_pid} --subject-cover {pass_pcv} -f {fmt} -o {out_file} --masking no"
         process = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT).stdout.read()
-        print("\n{0}\n{1}".format(cmd, process.decode("utf-8")))
+        print(f"\n{cmd}\n{process.decode('utf-8')}")
     return out_file
 
 
@@ -177,71 +177,69 @@ def taxonomy_filter(results, taxonomy):
 
 def show_cds_result(dmnd_results):
     for data in dmnd_results:
-        print('\nTarget: {0}\ttarget length: {1}\tstart: {2}\tend: {3}'.format(data['tid'], data['tlen'],
-                                                                               data['tstart'], data['tend']))
-        print('Query: {0}\tquery start: {1}\tquery end: {2}\tstrand: {3}'.format(data['qid'], data['qstart'],
-                                                                                 data['qend'], data['strand']))
-        print('Perc_pos: {0}\tPerc_id: {1}\ttarget_cov: {2}'.format(data['ppos'], data['pid'], data['pcv']))
+        print(f'\nTarget: {data["tid"]}\ttarget length: {data["tlen"]}\tstart: {data["tstart"]}\tend: {data["tend"]}')
+        print( f'Query: {data["qid"]}\tquery start: {data["qstart"]}\tquery end: {data["qend"]}\tstrand: {data["strand"]}')
+        print(f'Perc_pos: {data["ppos"]}\tPerc_id: {data["pid"]}\ttarget_cov: {data["pcv"]}')
         print('Blastx:')
         if data['strand'] > 0:
             try:
-                print('Detected: {0}'.format(str(Seq(data['qseq']).translate(table='Bacterial', cds=True))))
+                print(f'Detected: {str(Seq(data["qseq"]).translate(table="Bacterial", cds=True))}')
             except Exception as e:
                 print(e)
-                print('Detected: {0}'.format(str(Seq(data['qseq']).translate(table='Bacterial', cds=False))))
+                print(f'Detected: {str(Seq(data["qseq"]).translate(table="Bacterial", cds=False))}')
         else:
             try:
-                print('Detected: {0}'.format(
-                    str(Seq(data['qseq']).reverse_complement().translate(table='Bacterial', cds=True))))
+                print(f'Detected: {str(Seq(data["qseq"]).reverse_complement().translate(table="Bacterial", cds=True))}')
             except Exception as e:
                 print(e)
-                print('Detected: {0}'.format(
-                    str(Seq(data['qseq']).reverse_complement().translate(table='Bacterial', cds=False))))
+                print(
+                    f'Detected: {str(Seq(data["qseq"]).reverse_complement().translate(table="Bacterial", cds=False))}')
         if 'qprot' and 'tprot' in data:
             print('Final alignment:')
-            print('Detected: {0}'.format(data['qprot']))
-            print('Database: {0}'.format(data['tprot']))
+            print(f'Detected: {data["qprot"]}')
+            print(f'Database: {data["tprot"]}')
         if 'mean_qual' in data:
-            print('Max base quality: {0}\tMean base quality: {1}\tMin base quality: {2}'
-                  .format(data['max_qual'], data['mean_qual'], data['min_qual']))
-            print('Max base depth: {0}\tMean base depth: {1}\tMin base depth: {2}'
-                  .format(data['max_depth'], data['mean_depth'], data['min_depth']))
+            print(
+                f'Max base quality: {data["max_qual"]}\tMean base quality: {data["mean_qual"]}\tMin base quality:'
+                f' {data["min_qual"]}')
+            print(
+                f'Max base depth: {data["max_depth"]}\tMean base depth: {data["mean_depth"]}\tMin base depth:'
+                f' {data["min_depth"]}')
         if 'prot_snp' in data:
             snps = []
             for d in data['prot_snp']:
                 if 'dna_data' in d:
-                    snps.append('{0}{1}{2} [{3}]'.format(d['t_aa'], d['t_prot_pos'], d['q_aa'], d['dna_data']))
+                    snps.append(f'{d["t_aa"]}{d["t_prot_pos"]}{d["q_aa"]} [{d["dna_data"]}]')
                 else:
-                    snps.append('{0}{1}{2}'.format(d['t_aa'], d['t_prot_pos'], d['q_aa']))
-            print('{0} prot snp(s): {1}'.format(len(data['prot_snp']), ', '.join(snps)))
+                    snps.append(f'{d["t_aa"]}{d["t_prot_pos"]}{d["q_aa"]}')
+            print(f'{len(data["prot_snp"])} prot snp(s): {", ".join(snps)}')
         if 'prot_sub' in data:
             subs = []
             for d in data['prot_sub']:
                 if 'dna_data' in d:
-                    subs.append('{0}{1}{2} [{3}]'.format(d['t_aa'], d['t_prot_pos'], d['q_aa'], d['dna_data']))
+                    subs.append(f'{d["t_aa"]}{d["t_prot_pos"]}{d["q_aa"]} [{d["dna_data"]}]')
                 else:
-                    subs.append('{0}{1}{2}'.format(d['t_aa'], d['t_prot_pos'], d['q_aa']))
-            print('{0} prot sub(s): {1}'.format(len(data['prot_sub']), ', '.join(subs)))
+                    subs.append(f'{d["t_aa"]}{d["t_prot_pos"]}{d["q_aa"]}')
+            print(f'{len(data["prot_sub"])} prot sub(s): {", ".join(subs)}')
         if 'known_prot_snp' in data:
-            print('DBse snp: {0}'.format(', '.join(data['known_prot_snp'].split('|'))))
+            print(f'DBse snp: {", ".join(data["known_prot_snp"].split("|"))}')
         if 'warning' in data:
-            print('Sequence warning: {0}'.format(data['warning']))
+            print(f'Sequence warning: {data["warning"]}')
         print('')
 
 
 def show_dna_result(blastn_results):
     for data in blastn_results:
-        print('\nTarget: {0}\ttarget length: {1}\tstart: {2}\tend: {3}'.format(data['tid'], data['tlen'],
-                                                                               data['tstart'], data['tend']))
-        print('Query: {0}\tquery start: {1}\tquery end: {2}\tstrand: {3}'.format(data['qid'], data['qstart'],
-                                                                                 data['qend'], data['strand']))
-        print('Perc_pos: {0}\tPerc_id: {1}\ttarget_cov: {2}'.format(data['ppos'], data['pid'], data['pcv']))
+        print(f'\nTarget: {data["tid"]}\ttarget length: {data["tlen"]}\tstart: {data["tstart"]}\tend: {data["tend"]}')
+        print(
+            f'Query: {data["qid"]}\tquery start: {data["qstart"]}\tquery end: {data["qend"]}\tstrand: {data["strand"]}')
+        print(f'Perc_pos: {data["ppos"]}\tPerc_id: {data["pid"]}\ttarget_cov: {data["pcv"]}')
         print('Blastn:')
         # if data['strand'] > 0:
-        print('Detected: {0}'.format(data['qseq']))
-        print('DBase   : {0}'.format(data['tseq']))
+        print(f'Detected: {data["qseq"]}')
+        print(f'DBase   : {data["tseq"]}')
         if 'warning' in data:
-            print('Sequence warning: {0}'.format(data['warning']))
+            print(f'Sequence warning: {data["warning"]}')
         # else:
         #    print 'Detected: {0}'.format(str(Seq(data['qseq']).reverse_complement()))
         # if 'qdna' and 'tdna' in data:
@@ -249,30 +247,32 @@ def show_dna_result(blastn_results):
         #    print 'Detected: {0}'.format(data['qdna'])
         #    print 'Database: {0}'.format(data['tdna'])
         if 'mean_qual' in data:
-            print('Max base quality: {0}\tMean base quality: {1}\tMin base quality: {2}'
-                  .format(data['max_qual'], data['mean_qual'], data['min_qual']))
-            print('Max base depth: {0}\tMean base depth: {1}\tMin base depth: {2}'
-                  .format(data['max_depth'], data['mean_depth'], data['min_depth']))
+            print(
+                f'Max base quality: {data["max_qual"]}\tMean base quality: {data["mean_qual"]}\tMin base quality:'
+                f' {data["min_qual"]}')
+            print(
+                f'Max base depth: {data["max_depth"]}\tMean base depth: {data["mean_depth"]}\tMin base depth:'
+                f' {data["min_depth"]}')
         if 'dna_snp' in data:
             snps = []
             for d in data['dna_snp']:
                 # print d['dna_data']
                 if 'dna_data' in d:
-                    snps.append('{0}{1}{2} [{3}]'.format(d['t_base'], d['t_dna_pos'], d['q_base'], d['dna_data']))
+                    snps.append(f'{d["t_base"]}{d["t_dna_pos"]}{d["q_base"]} [{d["dna_data"]}]')
                 else:
-                    snps.append('{0}{1}{2}'.format(d['t_base'], d['t_dna_pos'], d['q_base']))
-            print('{0} dna snp(s): {1}'.format(len(data['dna_snp']), ', '.join(snps)))
+                    snps.append(f'{d["t_base"]}{d["t_dna_pos"]}{d["q_base"]}')
+            print(f'{len(data["dna_snp"])} dna snp(s): {", ".join(snps)}')
         if 'dna_sub' in data:
             subs = []
             for d in data['dna_sub']:
                 # print d['dna_data']
                 if 'dna_data' in d:
-                    subs.append('{0}{1}{2} [{3}]'.format(d['t_base'], d['t_dna_pos'], d['q_base'], d['dna_data']))
+                    subs.append(f'{d["t_base"]}{d["t_dna_pos"]}{d["q_base"]} [{d["dna_data"]}]')
                 else:
-                    subs.append('{0}{1}{2}'.format(d['t_base'], d['t_dna_pos'], d['q_base']))
-            print('{0} dna sub(s): {1}'.format(len(data['dna_sub']), ', '.join(subs)))
+                    subs.append(f'{d["t_base"]}{d["t_dna_pos"]}{d["q_base"]}')
+            print(f'{len(data["dna_sub"])} dna sub(s): {", ".join(subs)}')
         if 'known_dna_snp' in data:
-            print('DBse snp: {0}'.format(', '.join(data['known_dna_snp'].split('|'))))
+            print(f'DBse snp: {", ".join(data["known_dna_snp"].split("|"))}')
         print('')
 
 
@@ -286,11 +286,11 @@ def dna_data_to_dict(id, d, dna_data, item):
     mut = ""
 
     if item in ['prot_snp', 'prot_sub']:
-        mut = OrderedDict([('Feature', id), ('Mutation', '{0}{1}{2}'.format(d['t_aa'], d['t_prot_pos'], d['q_aa'])),
+        mut = OrderedDict([('Feature', id), ('Mutation', f'{d["t_aa"]}{d["t_prot_pos"]}{d["q_aa"]}'),
                            ('Mutation type', type_mut), ('DNA position', pos), ('DNA strand', strand), ('Codon', base),
                            ('Sequencing depth', depth), ('Base quality', qual)])
     elif item in ['dna_snp', 'dna_sub']:
-        mut = OrderedDict([('Feature', id), ('Mutation', '{0}{1}{2}'.format(d['t_base'], d['t_dna_pos'], d['q_base'])),
+        mut = OrderedDict([('Feature', id), ('Mutation', f'{d["t_base"]}{d["t_dna_pos"]}{d["q_base"]}'),
                            ('Mutation type', type_mut), ('DNA position', pos), ('DNA strand', strand),
                            ('Codon/base', base),
                            ('Sequencing depth', depth), ('Base quality', qual)])
@@ -342,7 +342,7 @@ def write_csv_html(merged_results, mut_prefix, id_prefix, pass_alarm_qual=20, pa
                                     for depth in depths.split(','):
                                         depth_ref, depth_total = depth.split('/')
                                         if int(depth_ref) < pass_alarm_depth:
-                                            depth_alarm = 'depth<{0}'.format(pass_alarm_depth)
+                                            depth_alarm = f'depth<{pass_alarm_depth}'
                                             break
 
                                 if frac_alarm == '':
@@ -352,7 +352,7 @@ def write_csv_html(merged_results, mut_prefix, id_prefix, pass_alarm_qual=20, pa
                                         if int(depth_total) != 0:
                                             frac = int(depth_ref) / float(depth_total)
                                             if frac < pass_alarm_frac:
-                                                frac_alarm = 'frac<{0}'.format(pass_alarm_frac)
+                                                frac_alarm = f'frac<{pass_alarm_frac}'
                                                 break
                                         else:
                                             frac_alarm = 'depth_total:0'
@@ -362,7 +362,7 @@ def write_csv_html(merged_results, mut_prefix, id_prefix, pass_alarm_qual=20, pa
                                     quals = mut['Base quality']
                                     for qual in quals.split(','):
                                         if float(qual) < pass_alarm_qual:
-                                            qual_alarm = 'qual<{0}'.format(pass_alarm_qual)
+                                            qual_alarm = f'qual<{pass_alarm_qual}'
                                             break
 
                             for a in [frac_alarm, depth_alarm, qual_alarm]:
@@ -379,14 +379,14 @@ def write_csv_html(merged_results, mut_prefix, id_prefix, pass_alarm_qual=20, pa
 
                     if item == 'prot_snp':
                         if alarm == '':
-                            snps.append('{0}{1}{2}'.format(d['t_aa'], d['t_prot_pos'], d['q_aa']))
+                            snps.append(f'{d["t_aa"]}{d["t_prot_pos"]}{d["q_aa"]}')
                         else:
-                            snps.append('{0}{1}{2} #{3}#'.format(d['t_aa'], d['t_prot_pos'], d['q_aa'], alarm))
+                            snps.append(f'{d["t_aa"]}{d["t_prot_pos"]}{d["q_aa"]} #{alarm}#')
                     elif item == 'dna_snp':
                         if alarm == '':
-                            snps.append('{0}{1}{2}'.format(d['t_base'], d['t_dna_pos'], d['q_base']))
+                            snps.append(f'{d["t_base"]}{d["t_dna_pos"]}{d["q_base"]}')
                         else:
-                            snps.append('{0}{1}{2} #{3}#'.format(d['t_base'], d['t_dna_pos'], d['q_base'], alarm))
+                            snps.append(f'{d["t_base"]}{d["t_dna_pos"]}{d["q_base"]} #{alarm}#')
 
         snps = ', '.join(snps)
         subs = []
@@ -411,7 +411,7 @@ def write_csv_html(merged_results, mut_prefix, id_prefix, pass_alarm_qual=20, pa
                                         depth_ref, depth_total = depth.split('/')
                                         try:
                                             if int(depth_ref) < pass_alarm_depth:
-                                                depth_alarm = 'depth<{0}'.format(pass_alarm_depth)
+                                                depth_alarm = f'depth<{pass_alarm_depth}'
                                                 break
                                         except Exception as e:
                                             print(e)
@@ -426,7 +426,7 @@ def write_csv_html(merged_results, mut_prefix, id_prefix, pass_alarm_qual=20, pa
                                             if int(depth_total) != 0:
                                                 frac = int(depth_ref) / float(depth_total)
                                                 if frac < pass_alarm_frac:
-                                                    frac_alarm = 'frac<{0}'.format(pass_alarm_frac)
+                                                    frac_alarm = f'frac<{pass_alarm_frac}'
                                                     break
                                             else:
                                                 frac_alarm = 'depth_total:0'
@@ -441,7 +441,7 @@ def write_csv_html(merged_results, mut_prefix, id_prefix, pass_alarm_qual=20, pa
                                     for qual in quals.split(','):
                                         try:
                                             if float(qual) < pass_alarm_qual:
-                                                qual_alarm = 'qual<{0}'.format(pass_alarm_qual)
+                                                qual_alarm = f'qual<{pass_alarm_qual}'
                                                 break
                                         except Exception as e:
                                             print(e)
@@ -462,30 +462,23 @@ def write_csv_html(merged_results, mut_prefix, id_prefix, pass_alarm_qual=20, pa
 
                     if item == 'prot_sub':
                         if alarm == '':
-                            subs.append('{0}{1}{2}'.format(d['t_aa'], d['t_prot_pos'], d['q_aa']))
+                            subs.append(f'{d["t_aa"]}{d["t_prot_pos"]}{d["q_aa"]}')
                         else:
-                            subs.append('{0}{1}{2} #{3}#'.format(d['t_aa'], d['t_prot_pos'], d['q_aa'], alarm))
+                            subs.append(f'{d["t_aa"]}{d["t_prot_pos"]}{d["q_aa"]} #{alarm}#')
                     elif item == 'dna_sub':
                         if alarm == '':
-                            subs.append('{0}{1}{2}'.format(d['t_base'], d['t_dna_pos'], d['q_base']))
+                            subs.append(f'{d["t_base"]}{d["t_dna_pos"]}{d["q_base"]}')
                         else:
-                            subs.append('{0}{1}{2} #{3}#'.format(d['t_base'], d['t_dna_pos'], d['q_base'], alarm))
+                            subs.append(f'{d["t_base"]}{d["t_dna_pos"]}{d["q_base"]} #{alarm}#')
 
                     if mutations:
                         df = pd.DataFrame.from_dict(mutations)
-                        df.to_html('{0}_{1}_{2}_{3}-{4}_mut.html'
-                                   .format(mut_prefix,
-                                           data['tid'].replace(':', '_').replace('(', '').replace(')', '')
-                                           .replace('\'', 'pr'),
-                                           data['qid'], data['qstart'], data['qend']), index=False)
-                        df.to_csv('{0}_{1}_{2}_{3}-{4}_mut.csv'
-                                  .format(mut_prefix,
-                                          data['tid'].replace(':', '_').replace('(', '').replace(')', '')
-                                          .replace('\'', 'pr'),
-                                          data['qid'], data['qstart'], data['qend']), sep='\t', index=False)
-
+                        tid = data['tid'].replace(':', '_').replace('(', '').replace(')', '') .replace('\'', 'pr')
+                        df.to_html(f"{mut_prefix}_{tid}_{data['qid']}_{data['qstart']}-{data['qend']}_mut.html",
+                                   index=False)
+                        df.to_csv(f'{mut_prefix}_{tid}_{data["qid"]}_{data["qstart"]}-{data["qend"]}_mut.csv', sep='\t',
+                                  index=False)
         subs = ', '.join(subs)
-
         if 'known_prot_snp' in data:
             known_prot_snp = data['known_prot_snp'].replace('|', ', ')
         else:
@@ -525,42 +518,39 @@ def write_csv_html(merged_results, mut_prefix, id_prefix, pass_alarm_qual=20, pa
         records.append(d)
     df = pd.DataFrame.from_dict(records)
     df.sort_values(['Function', 'DBase name'], ascending=[True, True], inplace=True)
-    df[header].to_csv('{0}_results.csv'.format(id_prefix), sep='\t', index=False)
-    df[header].to_html('{0}_results.html'.format(id_prefix), index=False)
+    df[header].to_csv(f'{id_prefix}_results.csv', sep='\t', index=False)
+    df[header].to_html(f'{id_prefix}_results.html', index=False)
 
 
 def description(data):
     snps = []
     if 'prot_snp' in data:
         for d in data['prot_snp']:
-            snps.append('{0}{1}{2}'.format(d['t_aa'], d['t_prot_pos'], d['q_aa']))
+            snps.append(f'{d["t_aa"]}{d["t_prot_pos"]}{d["q_aa"]}')
         snps = '|'.join(snps)
     elif 'dna_snp' in data:
         for d in data['dna_snp']:
-            snps.append('{0}{1}{2}'.format(d['t_base'], d['t_dna_pos'], d['q_base']))
+            snps.append(f'{d["t_base"]}{d["t_dna_pos"]}{d["q_base"]}')
         snps = '|'.join(snps)
 
     subs = []
     if 'prot_sub' in data:
         for d in data['prot_sub']:
-            subs.append('{0}{1}{2}'.format(d['t_aa'], d['t_prot_pos'], d['q_aa']))
+            subs.append(f'{d["t_aa"]}{d["t_prot_pos"]}{d["q_aa"]}')
         subs = '|'.join(subs)
     elif 'dna_sub' in data:
         for d in data['dna_sub']:
-            subs.append('{0}{1}{2}'.format(d['t_base'], d['t_dna_pos'], d['q_base']))
+            subs.append(f'{d["t_base"]}{d["t_dna_pos"]}{d["q_base"]}')
         subs = '|'.join(subs)
 
     try:
-        des = 'function:{0}, mechanism:{1}, reference_sequence: {2}, perc_identity:{3}, perc_coverage:{4}, ' \
-              'min_depth:{5}, mean_depth:{6}, max_depth:{7}, min_quality:{8}, mean_quality:{9}, max_quality:{10}, ' \
-              'known_sub:{11}'\
-            .format(data['func'], data['mech'], data['tid'].split('::')[-1], data['pid'], data['pcv'],
-                    data['min_depth'], data['mean_depth'], data['max_depth'], data['min_qual'], data['mean_qual'],
-                    data['max_qual'], snps)
+        des = f'function:{data["func"]}, mechanism:{data["mech"]}, reference_sequence: {data["tid"].split("::")[-1]},' \
+              f' perc_identity:{data["pid"]}, perc_coverage:{data["pcv"]}, min_depth:{data["min_depth"]},' \
+              f' mean_depth:{data["mean_depth"]}, max_depth:{data["max_depth"]}, min_quality:{data["min_qual"]},' \
+              f' mean_quality:{data["mean_qual"]}, max_quality:{data["max_qual"]}, known_sub:{snps}'
     except KeyError:
-        des = 'function:{0}, mechanism:{1}, reference_sequence: {2}, perc_identity:{3}, perc_coverage:{4}, ' \
-              'known_sub:{5}'.format(data['func'], data['mech'], data['tid'].split('::')[-1],
-                                     data['pid'], data['pcv'], snps)
+        des = f'function:{data["func"]}, mechanism:{data["mech"]}, reference_sequence: {data["tid"].split("::")[-1]},' \
+              f' perc_identity:{data["pid"]}, perc_coverage:{data["pcv"]}, known_sub:{snps}'
     return des
 
 
@@ -580,12 +570,12 @@ def test_cds(data):
 
 
 def write_fasta(results, out_dir, out_prefix):
-    aa_outfile = os.path.join(out_dir, '{0}.faa'.format(out_prefix))
-    dna_outfile = os.path.join(out_dir, '{0}.fna'.format(out_prefix))
+    aa_outfile = os.path.join(out_dir, f'{out_prefix}.faa')
+    dna_outfile = os.path.join(out_dir, f'{out_prefix}.fna')
     aa_records_list = []
     dna_records_list = []
     for data in results:
-        ID = '{0}__{1}__{2}__f{3}__{4}'.format(data['qid'], data['qstart'], data['qend'], data['strand'], data['tid'])
+        ID = f'{data["qid"]}__{data["qstart"]}__{data["qend"]}__f{data["strand"]}__{data["tid"]}'
         des = description(data)
 
         if 'qprot' in data:
@@ -654,24 +644,23 @@ def write_gbk(results, query_dic, out_dir, out_prefix):
         rec.features = sorted(rec.features, key=lambda feature: feature.location.start)
 
         for feature in rec.features:
-            feature.qualifiers = OrderedDict([('locus_tag', 'DET_{0}'.format(n + 1))] +
-                                             list(feature.qualifiers.items()))
+            feature.qualifiers = OrderedDict([('locus_tag', f'DET_{n + 1}')] + list(feature.qualifiers.items()))
             n += 1
 
-        out_file = os.path.join(out_dir, '{0}.gbk'.format(str(rec.id).replace(".", "-")))
+        out_file = os.path.join(out_dir, f'{str(rec.id).replace(".", "-")}.gbk')
         with open(out_file, 'w') as out_f:
             SeqIO.write([rec], out_f, 'genbank')
 
 
 def main(args):
-    print("Version diamDetector: {0}\n".format(version()))
+    print(f"Version diamDetector: {version()}\n")
     wk_dir = args.wkdir
     # Check working directory
     if glob.glob(wk_dir) is None:
-        print("\nDirectory {0} not found!\n".format(wk_dir))
+        print(f"\nDirectory {wk_dir} not found!\n")
         exit(1)
     else:
-        print("\nDirectory {0} found".format(wk_dir))
+        print(f"\nDirectory {wk_dir} found")
 
     sample_file = args.sample_file
 
@@ -681,10 +670,10 @@ def main(args):
 
     # Check sample file
     if not os.path.exists(sample_file):
-        print("\nSample file {0} not found!\n".format(sample_file))
+        print(f"\nSample file {sample_file} not found!\n")
         exit(1)
     else:
-        print("\nSample file: {0}".format(sample_file))
+        print(f"\nSample file: {sample_file}")
 
     # Load sample name and species if provided (not required)
     sample_dic = load_sample_name(sample_file)
@@ -695,12 +684,12 @@ def main(args):
     file_list = []
     for sample_name in sample_dic.keys():
         try:
-            print("Search for the assembly file: {0}".format(os.path.join(wk_dir, '{0}.fasta'.format(sample_name))))
-            sample_file = os.path.join(wk_dir, '{0}.fasta'.format(sample_name))
+            print(f"Search for the assembly file: {os.path.join(wk_dir, f'{sample_name}.fasta')}")
+            sample_file = os.path.join(wk_dir, f'{sample_name}.fasta')
             file_list.append(sample_file)
-            print('Assembly for {0}: {1}'.format(sample_name, sample_file))
+            print(f'Assembly for {sample_name}: {sample_file}')
         except IndexError:
-            print('Assembly for {0}: file not found!'.format(sample_name))
+            print(f'Assembly for {sample_name}: file not found!')
 
     # Check the location of databases:
     print("\nSearch for the databases:")
@@ -709,29 +698,29 @@ def main(args):
     cds_target_file = os.path.abspath(args.cds_target_file)
     if os.path.exists(cds_target_file):
         if os.stat(cds_target_file).st_size == 0:
-            print("  CDS database {0} found but EMPTY !!!!!!!!".format(cds_target_file))
+            print(f"  CDS database {cds_target_file} found but EMPTY !!!!!!!!")
             cds_process = False
         else:
             check_db += 1
-            print("  CDS database {0} found".format(cds_target_file))
+            print(f"  CDS database {cds_target_file} found")
     else:
         print("  No CDS database")
     dna_target_file = os.path.abspath(args.dna_target_file)
     dna_process = True
     if os.path.exists(dna_target_file):
         if os.stat(dna_target_file).st_size == 0:
-            print("  DNA database {0} found but EMPTY !!!!!!!!".format(dna_target_file))
+            print(f"  DNA database {dna_target_file} found but EMPTY !!!!!!!!")
             dna_process = False
         else:
             check_db += 1
-            print("  DNA database {0} found".format(dna_target_file))
+            print(f"  DNA database {dna_target_file} found")
     else:
         print("  No DNA database")
     if check_db == 0:
         print("NO database provided\n")
         exit(1)
     else:
-        print("{0} database provided\n".format(check_db))
+        print(f"{check_db} database provided\n")
 
     database_split = os.path.basename(cds_target_file).split(".")[0].split("_")
 
@@ -742,16 +731,16 @@ def main(args):
         database = "ARM"
 
     # Print version and subset database
-    print("\nList {1}-DB Subset: {0}\n".format(database_split[2], database))
-    print("\nVersion {1}-DB: {0}\n".format(database_split[1], database))
+    print(f"\nList {database}-DB Subset: {database_split[2]}\n")
+    print(f"\nVersion {database}-DB: {database_split[1]}\n")
 
     print("\nFeature detection parameters:")
     pass_pid = float(args.perc_id)
-    print("  Identity threshold: {0}%".format(pass_pid))
+    print(f"  Identity threshold: {pass_pid}%")
     pass_pcv = float(args.perc_cv)
-    print("  Coverage threshold: {0}%".format(pass_pcv))
+    print(f"  Coverage threshold: {pass_pcv}%")
     pass_overlap = int(args.overlap)
-    print("  Maximum feature overlap: {0}-bases\n".format(pass_overlap))
+    print(f"  Maximum feature overlap: {pass_overlap}-bases\n")
 
     # Number of threads
     threads = int(args.threads)
@@ -766,7 +755,7 @@ def main(args):
         bam_file = os.path.splitext(query_file)[0] + '.bam'
         # Set taxonomy for taxonomy-based filtering
         taxonomy = sample_dic[sample_name]
-        title = "~~~~  {0}/{1} sample: {2} species: {3}  ~~~~".format(n + 1, len(file_list), sample_name, taxonomy)
+        title = f"~~~~  {n + 1}/{len(file_list)} sample: {sample_name} species: {taxonomy}  ~~~~"
         print("\n\n")
         print("~" * len(title))
         print(title)
@@ -779,19 +768,17 @@ def main(args):
             taxonomy_filter_detect = 'none'
             print('No taxonomy provided: none taxonomy filtering will be performed')
 
-        out_diamond_file = os.path.join(os.path.dirname(query_file), 'diam_output_{0}.csv'.format(sample_name))
+        out_diamond_file = os.path.join(os.path.dirname(query_file), f'diam_output_{sample_name}_{database}.csv')
         # Launch CDS detection
         if os.path.exists(cds_target_file) and cds_process:
             dmnd_db = make_dmnd_database(cds_target_file, force)
             dmnd_result_file = run_diam(dmnd_db, query_file, pass_pid, pass_pcv, threads, force, out_diamond_file)
             dmnd_results = load_dmnd_result(dmnd_result_file, cds_target_file)
-
         else:
             print('No CDS to search')
             dmnd_results = []
 
-        out_blastn_file = os.path.join(os.path.dirname(query_file), 'blastn_output.csv')
-
+        out_blastn_file = os.path.join(os.path.dirname(query_file), f'blastn_output_{sample_name}_{database}.csv')
         # Launch DNA detection
         if os.path.exists(dna_target_file) and dna_process:
             blastn_db = make_blastn_database(dna_target_file, force)
@@ -802,23 +789,21 @@ def main(args):
             blastn_results = []
 
         # Filter the DNA and CDS features on the bases of taxonomy and overlaps
-        print('\nNumber of detected features: {0}'.format(len(dmnd_results) + len(blastn_results)))
+        print(f'\nNumber of detected features: {len(dmnd_results) + len(blastn_results)}')
         if taxonomy_filter_detect == 'strict' and taxonomy != '':
             dmnd_results = taxonomy_filter_detect(dmnd_results, taxonomy)
-
             blastn_results = taxonomy_filter_detect(blastn_results, taxonomy)
-            print('Number of detected features after stric taxonomic filtering: {0}'.format(
-                len(dmnd_results) + len(blastn_results)))
+            print(f'Number of detected features after stric taxonomic filtering:  '
+                  f'{len(dmnd_results) + len(blastn_results)}')
 
         if taxonomy_filter_detect == 'lax':
             dmnd_results = overlap_filter(dmnd_results, taxonomy, pass_overlap)
-            print('\nNumber of detected features after lax taxonomic and overlap filtering: {0} \n'.format(
-                len(dmnd_results)))
+            print(f'\nNumber of detected features after lax taxonomic and overlap filtering: {len(dmnd_results)} \n')
             blastn_results = overlap_filter(blastn_results, taxonomy, pass_overlap)
-            print('\nNumber of detected features after lax taxonomic and overlap filtering: {0}'
-                  .format(len(blastn_results)))
-            print('\n######## Number of detected features after lax taxonomic and overlap filtering: {0} ########'
-                  .format(len(dmnd_results) + len(blastn_results)))
+            print(f'\nNumber of detected features after lax taxonomic and overlap filtering: {len(blastn_results)}')
+            print(
+                f'\n######## Number of detected features after lax taxonomic and overlap filtering:'
+                f' {len(dmnd_results) + len(blastn_results)} ########')
         else:
             dmnd_results = overlap_filter(dmnd_results, '', pass_overlap)
             blastn_results = overlap_filter(blastn_results, '', pass_overlap)
@@ -890,9 +875,7 @@ def version():
 
 
 def run():
-
     global usage
-
     usage = "diamDetector.py [-cdsDB cds database 'armDB_6_GN_cds.fas'] [-dnaDB dna database 'armDB_6_GN_dna.fas']" \
             " [-wd work directory with the assembly] [-sf sample file] "
 
