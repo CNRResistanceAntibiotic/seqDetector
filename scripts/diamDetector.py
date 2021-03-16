@@ -296,8 +296,8 @@ def dna_data_to_dict(id, d, dna_data, item):
     return mut
 
 
-def write_csv_html(merged_results, mut_prefix, id_prefix, pass_alarm_qual=20, pass_alarm_depth=30, pass_alarm_frac=0.9,
-                   database=""):
+def write_csv_html(merged_results, mut_prefix, id_prefix, database, pass_alarm_qual=20, pass_alarm_depth=30,
+                   pass_alarm_frac=0.9):
 
     header = ['Function', 'DBase name', '% ident', '% cov', 'Sequence Warning', 'Min depth', 'Mean depth', 'Max depth',
               'Min qual', 'Mean qual', 'Max qual', 'SNP', 'SUB', 'Known prot SNP', 'Known DNA SNP', 'DBase start',
@@ -401,7 +401,6 @@ def write_csv_html(merged_results, mut_prefix, id_prefix, pass_alarm_qual=20, pa
                                 dna_data['t'] = 'Unknown'
                                 mut = dna_data_to_dict(data['tid'], d, dna_data, item)
                                 mutations.append(mut)
-
                                 if depth_alarm == '':
                                     depths = mut['Sequencing depth']
                                     for depth in depths.split(','):
@@ -728,9 +727,9 @@ def main(args):
     print(f"\nVersion {database}-DB: {database_split[1]}\n")
 
     print("\nFeature detection parameters:")
-    pass_pid = float(args.perc_id)
+    pass_pid = int(args.perc_id)
     print(f"  Identity threshold: {pass_pid}%")
-    pass_pcv = float(args.perc_cv)
+    pass_pcv = int(args.perc_cv)
     print(f"  Coverage threshold: {pass_pcv}%")
     pass_overlap = int(args.overlap)
     print(f"  Maximum feature overlap: {pass_overlap}-bases\n")
@@ -784,11 +783,13 @@ def main(args):
         # Filter the DNA and CDS features on the bases of taxonomy and overlaps
         print(f'\nNumber of detected features: {len(dmnd_results) + len(blastn_results)}')
         if taxonomy_filter_detect == 'strict' and taxonomy != '':
+            print("Need to rework function below")
+            """
             dmnd_results = taxonomy_filter_detect(dmnd_results, taxonomy)
             blastn_results = taxonomy_filter_detect(blastn_results, taxonomy)
             print(f'Number of detected features after stric taxonomic filtering:'
                   f' {len(dmnd_results) + len(blastn_results)}')
-
+            """
         if taxonomy_filter_detect == 'lax':
             dmnd_results = overlap_filter(dmnd_results, taxonomy, pass_overlap)
             print(f'\nNumber of detected features after lax taxonomic and overlap filtering: {len(dmnd_results)} \n')
@@ -893,13 +894,13 @@ def run():
     parser.add_argument('-cv', '--perc_cv', dest="perc_cv", default="70",
                         help="Minimum target coverage percentage [70]")
     parser.add_argument('-ov', '--overlap', dest="overlap", default="20",
-                        help="Maximun overlap between detected features as base number [20]")
+                        help="Maximum overlap between detected features as base number [20]")
     parser.add_argument('-tf', '--taxonFilter', dest="taxonomy_filter", default='lax',
                         help='taxonomy filter type: strict, lax or none')
     parser.add_argument('-th', '--threads', dest="threads", default='8', help='Number of threads [8]')
     parser.add_argument('-F', '--Force', dest="Force", action="store_true", default=False,
                         help="Overwrite the detected files")
-    parser.add_argument('-o', '--outPrefix', dest="outPrefix", default='', help="Outprefix [<database_name>]")
+    parser.add_argument('-o', '--outPrefix', dest="outPrefix", default='', help="Out prefix [<database_name>]")
     parser.add_argument('-V', '--version', action='version', version='diamDetector-' + version(),
                         help="Prints version number")
     args = parser.parse_args()
