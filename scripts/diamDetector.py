@@ -166,7 +166,6 @@ def taxonomy_filter(results, taxonomy):
         if match:
             if taxonomy.lower() not in match.groups()[0].lower():
                 del_list.append(index)
-
     del_list = list(set(del_list))
     del_list.sort()
     del_list.reverse()
@@ -178,7 +177,7 @@ def taxonomy_filter(results, taxonomy):
 def show_cds_result(dmnd_results):
     for data in dmnd_results:
         print(f'\nTarget: {data["tid"]}\ttarget length: {data["tlen"]}\tstart: {data["tstart"]}\tend: {data["tend"]}')
-        print( f'Query: {data["qid"]}\tquery start: {data["qstart"]}\tquery end: {data["qend"]}\tstrand: {data["strand"]}')
+        print(f'Query: {data["qid"]}\tquery start: {data["qstart"]}\tquery end: {data["qend"]}\tstrand: {data["strand"]}')
         print(f'Perc_pos: {data["ppos"]}\tPerc_id: {data["pid"]}\ttarget_cov: {data["pcv"]}')
         print('Blastx:')
         if data['strand'] > 0:
@@ -297,7 +296,8 @@ def dna_data_to_dict(id, d, dna_data, item):
     return mut
 
 
-def write_csv_html(merged_results, mut_prefix, id_prefix, pass_alarm_qual=20, pass_alarm_depth=30, pass_alarm_frac=0.9):
+def write_csv_html(merged_results, mut_prefix, id_prefix, pass_alarm_qual=20, pass_alarm_depth=30, pass_alarm_frac=0.9,
+                   database=""):
 
     header = ['Function', 'DBase name', '% ident', '% cov', 'Sequence Warning', 'Min depth', 'Mean depth', 'Max depth',
               'Min qual', 'Mean qual', 'Max qual', 'SNP', 'SUB', 'Known prot SNP', 'Known DNA SNP', 'DBase start',
@@ -376,7 +376,6 @@ def write_csv_html(merged_results, mut_prefix, id_prefix, pass_alarm_qual=20, pa
                             alarm = ''
                     else:
                         alarm = ''
-
                     if item == 'prot_snp':
                         if alarm == '':
                             snps.append(f'{d["t_aa"]}{d["t_prot_pos"]}{d["q_aa"]}')
@@ -394,9 +393,7 @@ def write_csv_html(merged_results, mut_prefix, id_prefix, pass_alarm_qual=20, pa
             if item in data:
                 for d in data[item]:
                     alarm = []
-                    depth_alarm = ''
-                    qual_alarm = ''
-                    frac_alarm = ''
+                    depth_alarm = qual_alarm = frac_alarm = ''
                     if 'dna_data' in d:
                         if d['dna_data'] != '':
                             for dna_data in d['dna_data'].split(' | '):
@@ -483,12 +480,10 @@ def write_csv_html(merged_results, mut_prefix, id_prefix, pass_alarm_qual=20, pa
             known_prot_snp = data['known_prot_snp'].replace('|', ', ')
         else:
             known_prot_snp = ''
-
         if 'known_dna_snp' in data:
             known_dna_snp = data['known_dna_snp'].replace('|', ', ')
         else:
             known_dna_snp = ''
-
         values = values + [snps, subs, known_prot_snp, known_dna_snp]
         values = values + [data['tstart'], data['tend'], data['tlen']]
         values = values + [data['qid'], data['qstart'], data['qend'], data['strand'], data['qend'] - data['qstart'] + 1]
@@ -507,19 +502,17 @@ def write_csv_html(merged_results, mut_prefix, id_prefix, pass_alarm_qual=20, pa
             q_dna_seq = str(data['qseq'])
         else:
             q_dna_seq = str(Seq(data['qseq']).reverse_complement())
-
         if 'tseq' in data:
             t_dna_seq = str(data['tseq'])
         else:
             t_dna_seq = ''
-
         values = values + [q_dna_seq, q_prot_seq, t_dna_seq, t_prot_seq]
         d = dict(zip(header, values))
         records.append(d)
     df = pd.DataFrame.from_dict(records)
     df.sort_values(['Function', 'DBase name'], ascending=[True, True], inplace=True)
-    df[header].to_csv(f'{id_prefix}_results.csv', sep='\t', index=False)
-    df[header].to_html(f'{id_prefix}_results.html', index=False)
+    df[header].to_csv(f'{id_prefix}_results_{database}.csv', sep='\t', index=False)
+    df[header].to_html(f'{id_prefix}_results_{database}.html', index=False)
 
 
 def description(data):
@@ -793,8 +786,8 @@ def main(args):
         if taxonomy_filter_detect == 'strict' and taxonomy != '':
             dmnd_results = taxonomy_filter_detect(dmnd_results, taxonomy)
             blastn_results = taxonomy_filter_detect(blastn_results, taxonomy)
-            print(f'Number of detected features after stric taxonomic filtering:  '
-                  f'{len(dmnd_results) + len(blastn_results)}')
+            print(f'Number of detected features after stric taxonomic filtering:'
+                  f' {len(dmnd_results) + len(blastn_results)}')
 
         if taxonomy_filter_detect == 'lax':
             dmnd_results = overlap_filter(dmnd_results, taxonomy, pass_overlap)
@@ -847,7 +840,7 @@ def main(args):
             mut_prefix = os.path.join(mut_dir, os.path.splitext(os.path.basename(query_file))[0].split('_')[0])
             id_prefix = os.path.splitext(query_file)[0]
             # Write the results as tsv and html files
-            write_csv_html(merged_results, mut_prefix, id_prefix)
+            write_csv_html(merged_results, mut_prefix, id_prefix, database)
             # Set the directory to store the sequences
             out_dir = os.path.join(os.path.dirname(query_file), 'Detected_sequences')
             if not os.path.exists(out_dir):
