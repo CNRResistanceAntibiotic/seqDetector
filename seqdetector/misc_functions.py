@@ -306,21 +306,19 @@ def extract_substitutions(data, wk_dir):
     dif_indexes.sort()
     mismatch = len(dif_indexes)
     nid = len(t_seq.seq) - mismatch
-
     pid = round(100 * nid / float(len(t_seq.seq)), 2)
     pcv = round(100 * len(str(q_seq.seq).replace('-', '').replace('*', '')) /
                 float(len(str(t_seq.seq).replace('-', ''))), 2)
-
     if pcv > 100:
         pcv = 100.0
-
     # extract mutations from alignment
     unclassified_subs = []
     known_snps = known_snps.split(',')
-    known_pos = ""
+    known_pos = []
     for x in known_snps:
         if re.match('[A-Zi][0-9]+[A-Zd]', x) and "STOP" not in x and "DEL" not in x:
-            known_pos = list(set([int(x[1:len(x) - 1])]))
+            known_pos.append(int(x[1:len(x) - 1]))
+    known_pos = list(set(known_pos))
     indel = 0
     for i in dif_indexes:
         t_prot_pos = i + 1 - t_seq.seq[0:i].count('-')
@@ -336,7 +334,6 @@ def extract_substitutions(data, wk_dir):
             indel = 1
         unclassified_subs.append(
             {'t_prot_pos': t_prot_pos, 'q_prot_pos': q_prot_pos, 'a_prot_pos': a_prot_pos, 't_aa': t_aa, 'q_aa': q_aa})
-
     # format indels
     if indel == 1:
         pre_pos, pre_query, pre_target = 0, '', ''
@@ -370,6 +367,10 @@ def extract_substitutions(data, wk_dir):
 
     # classify the mutation as known (snps) or unknown (subs)
     subs, snps = [], []
+    if "gyrA" in data["tid"]:
+        print(data)
+        print(unclassified_subs)
+        print(known_pos)
     if known_snps != ['']:
         for m in unclassified_subs:
             if m['t_prot_pos'] in known_pos:
@@ -383,6 +384,10 @@ def extract_substitutions(data, wk_dir):
                 subs.append(m)
     else:
         subs = unclassified_subs
+
+    if "gyrA" in data["tid"]:
+        print(snps)
+        print(subs)
 
     # update data before to return
     data['pid'] = pid

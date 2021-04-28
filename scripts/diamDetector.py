@@ -198,12 +198,10 @@ def show_cds_result(dmnd_results):
             print(f'Detected: {data["qprot"]}')
             print(f'Database: {data["tprot"]}')
         if 'mean_qual' in data:
-            print(
-                f'Max base quality: {data["max_qual"]}\tMean base quality: {data["mean_qual"]}\tMin base quality:'
-                f' {data["min_qual"]}')
-            print(
-                f'Max base depth: {data["max_depth"]}\tMean base depth: {data["mean_depth"]}\tMin base depth:'
-                f' {data["min_depth"]}')
+            print(f'Max base quality: {data["max_qual"]}\tMean base quality: {data["mean_qual"]}\tMin base quality:'
+                  f' {data["min_qual"]}')
+            print(f'Max base depth: {data["max_depth"]}\tMean base depth: {data["mean_depth"]}\tMin base depth:'
+                  f' {data["min_depth"]}')
         if 'prot_snp' in data:
             snps = []
             for d in data['prot_snp']:
@@ -246,12 +244,10 @@ def show_dna_result(blastn_results):
         #    print 'Detected: {0}'.format(data['qdna'])
         #    print 'Database: {0}'.format(data['tdna'])
         if 'mean_qual' in data:
-            print(
-                f'Max base quality: {data["max_qual"]}\tMean base quality: {data["mean_qual"]}\tMin base quality:'
-                f' {data["min_qual"]}')
-            print(
-                f'Max base depth: {data["max_depth"]}\tMean base depth: {data["mean_depth"]}\tMin base depth:'
-                f' {data["min_depth"]}')
+            print(f'Max base quality: {data["max_qual"]}\tMean base quality: {data["mean_qual"]}\tMin base quality:'
+                  f' {data["min_qual"]}')
+            print(f'Max base depth: {data["max_depth"]}\tMean base depth: {data["mean_depth"]}\tMin base depth:'
+                  f' {data["min_depth"]}')
         if 'dna_snp' in data:
             snps = []
             for d in data['dna_snp']:
@@ -326,9 +322,7 @@ def write_csv_html(merged_results, mut_prefix, id_prefix, database, pass_alarm_q
             if item in data:
                 for d in data[item]:
                     alarm = []
-                    depth_alarm = ''
-                    qual_alarm = ''
-                    frac_alarm = ''
+                    depth_alarm = qual_alarm = frac_alarm = ''
                     if 'dna_data' in d:
                         if d['dna_data'] != '':
                             for dna_data in d['dna_data'].split(' | '):
@@ -756,9 +750,12 @@ def main(args):
         taxonomy_filter_detect = args.taxonomy_filter
         if taxonomy_filter_detect not in ['strict', 'lax', 'none']:
             taxonomy_filter_detect = 'lax'
-        if taxonomy == 'No taxonomy provided':
+            print('Taxonomy is set as \'lax\'')
+        elif taxonomy == 'No taxonomy provided':
             taxonomy_filter_detect = 'none'
             print('No taxonomy provided: none taxonomy filtering will be performed')
+        else:
+            print(f'Taxonomy parameter is {taxonomy_filter_detect}')
 
         out_diamond_file = os.path.join(os.path.dirname(query_file), f'diam_output_{sample_name}_{database}.csv')
         # Launch CDS detection

@@ -10,26 +10,26 @@ def make_blastn_database(fasta_file, force=False, threads=8):
     blastn_db = os.path.abspath(fasta_file)
     if os.path.exists(blastn_db + '.nsp') and os.path.exists(blastn_db + '.nin') and os.path.exists(blastn_db + '.nhr') \
             and not force:
-        print('\nDatabase {0} already exists'.format(blastn_db))
+        print(f'\nDatabase {blastn_db} already exists')
     else:
-        cmd = '$(which makeblastdb) -in {0} -dbtype nucl -out {1}'.format(fasta_file, blastn_db)
+        cmd = f'$(which makeblastdb) -in {fasta_file} -dbtype nucl -out {blastn_db}'
         process = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT).stdout.read()
-        print("\n{0}\n{1}".format(cmd, process.decode("utf-8")))
+        print(f"\n{cmd}\n{process.decode('utf-8')}")
     return blastn_db
 
 
 def run_blastn(blastn_db, query_file, pass_pid=70, force=True, evalue=0.0001, threads=8, out_file=""):
 
     if not force and os.path.exists(out_file):
-        print('\nResult file {0} already exists'.format(out_file))
+        print(f'\nResult file {out_file} already exists')
 
     else:
         fmt = '\"6 qseqid frames sallseqid slen qstart qend sstart send length pident nident ppos positive mismatch ' \
               'gapopen gaps qseq sseq\"'
-        cmd = '$(which blastn) -out {0} -outfmt {1} -query {2} -db {3} -num_threads {4} -perc_identity {5} -evalue {6}' \
-            .format(out_file, fmt, query_file, blastn_db, threads, pass_pid, evalue)
+        cmd = f'$(which blastn) -out {out_file} -outfmt {fmt} -query {query_file} -db {blastn_db} -num_threads' \
+              f' {threads} -perc_identity {pass_pid} -evalue {evalue}'
         process = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT).stdout.read()
-        print("\n{0}\n{1}".format(cmd, process.decode("utf-8")))
+        print(f"\n{cmd}\n{process.decode('utf-8')}")
     return out_file
 
 
@@ -105,20 +105,17 @@ def dna_extract_quality_and_depth(bam_file, fas_file, blastn_results, out_prefix
         strand = data['strand']
         start = data['qstart']
         end = data['qend']
-        position = '{0}:{1}-{2}'.format(ctg, start, end)
+        position = f'{ctg}:{start}-{end}'
         out_dir = os.path.join(os.path.dirname(bam_file), '{}_depth_quality'.format(out_prefix))
-        stat_outfile = '{0}_{1}_{2}_{3}-{4}_stats.csv'.format(
-            os.path.join(out_dir, os.path.splitext(os.path.basename(bam_file))[0].split('_')[0]),
-            feature_name, ctg, start, end)
+        stat_outfile = f'{os.path.join(out_dir, os.path.splitext(os.path.basename(bam_file))[0].split("_")[0])}' \
+                       f'_{feature_name}_{ctg}_{start}-{end}_stats.csv'
 
-        data_outfile = '{0}_{1}_{2}_{3}-{4}_count.csv'.format(
-            os.path.join(out_dir, os.path.splitext(os.path.basename(bam_file))[0].split('_')[0]),
-            feature_name, ctg, start, end)
+        data_outfile = f'{os.path.join(out_dir, os.path.splitext(os.path.basename(bam_file))[0].split("_")[0])}' \
+                       f'_{feature_name}_{ctg}_{start}-{end}_count.csv'
 
-        feature_name = feature_name + "_{0}_{1}-{2}".format(ctg, start, end)
+        feature_name = feature_name + f"_{ctg}_{start}-{end}"
 
         if not (os.path.exists(data_outfile) and not os.path.exists(stat_outfile)) or force:
-
             bam2data.main(bam_file=bam_file, fasta_ref=fas_file, position=position, output_dir=out_dir,
                           feature_name=feature_name, force=True, mapping_qual=0, base_qual=0, stats=True, data=True)
 
@@ -145,12 +142,12 @@ def dna_extract_quality_and_depth(bam_file, fas_file, blastn_results, out_prefix
                             d = result[ctg][str(dna_pos)]
                             ref = d['reference'].upper()
                             if ref in ['A', 'T', 'C', 'G']:
-                                ref_depth = '{0}/{1}'.format(d['{0}_depth'.format(ref)], d['total_depth'])
-                                ref_qual = str(round(float(d['{0}_quality'.format(ref)]), 1))
+                                ref_depth = f'{d["{0}_depth".format(ref)]}/{d["total_depth"]}'
+                                ref_qual = str(round(float(d[f'{ref}_quality']), 1))
                             else:
                                 continue
 
-                            txt = 'p:{0}; f:{1}; b:{2}; d:{3}; q:{4}'.format(dna_pos, strand, ref, ref_depth, ref_qual)
+                            txt = f'p:{dna_pos}; f:{strand}; b:{ref}; d:{ref_depth}; q:{ref_qual}'
                         else:
                             txt = ''
 
@@ -161,11 +158,11 @@ def dna_extract_quality_and_depth(bam_file, fas_file, blastn_results, out_prefix
                             d = result[ctg][str(dna_pos)]
                             ref = d['reference'].upper()
                             if ref in ['A', 'T', 'C', 'G']:
-                                ref_depth = '{0}/{1}'.format(d['{}_depth'.format(ref)], d['total_depth'])
+                                ref_depth = f'{d["{}_depth".format(ref)]}/{d["total_depth"]}'
                                 ref_qual = str(round(float(d['{}_quality'.format(ref)]), 1))
                             else:
                                 continue
-                            txt = 'p:{0}; f:{1}; b:{2}; d:{3}; q:{4}'.format(dna_pos, strand, ref, ref_depth, ref_qual)
+                            txt = f'p:{dna_pos}; f:{strand}; b:{ref}; d:{ref_depth}; q:{ref_qual}'
                         # depth unknown at "dna_pos" position
                         else:
                             txt = ''
@@ -183,17 +180,16 @@ def cds_extract_quality_and_depth(bam_file, fas_file, dmnd_results, out_prefix, 
         strand = data['strand']
         start = data['qstart']
         end = data['qend']
-        position = '{0}:{1}-{2}'.format(ctg, start, end)
-        out_dir = os.path.join(os.path.dirname(bam_file), '{0}_depth_quality'.format(out_prefix))
+        position = f'{ctg}:{start}-{end}'
+        out_dir = os.path.join(os.path.dirname(bam_file), f'{out_prefix}_depth_quality')
 
-        feature_name = feature_name + "_{0}_{1}-{2}".format(ctg, start, end)
+        feature_name = feature_name + f"_{ctg}_{start}-{end}"
 
         bam2data.main(bam_file=bam_file, fasta_ref=fas_file, position=position, output_dir=out_dir,
                       feature_name=feature_name, force=True, mapping_qual=0, base_qual=0, stats=True, data=True)
 
-        stat_outfile = '{0}_{1}_stats.csv'.format(
-            os.path.join(out_dir, os.path.splitext(os.path.basename(bam_file))[0].split('_')[0]),
-            feature_name, ctg, start, end)
+        stat_outfile = f'{os.path.join(out_dir, os.path.splitext(os.path.basename(bam_file))[0].split("_")[0])}' \
+                       f'_{feature_name}_stats.csv'
 
         result = read_bam_stat(stat_outfile)
         data['mean_qual'] = round(float(result['Ref_quali_mean']), 1)
@@ -203,9 +199,8 @@ def cds_extract_quality_and_depth(bam_file, fas_file, dmnd_results, out_prefix, 
         data['min_depth'] = int(float(result['Ref_depth_min']))
         data['max_depth'] = int(float(result['Ref_depth_max']))
 
-        data_outfile = '{0}_{1}_count.csv'.format(
-            os.path.join(out_dir, os.path.splitext(os.path.basename(bam_file))[0].split('_')[0]),
-            feature_name, ctg, start, end)
+        data_outfile = f'{os.path.join(out_dir, os.path.splitext(os.path.basename(bam_file))[0].split("_")[0])}' \
+                       f'_{feature_name}_count.csv'
         # if os.path.exists(data_outfile) == False or force == True:
 
         result, warning = read_bam_count(data_outfile)
@@ -237,17 +232,17 @@ def cds_extract_quality_and_depth(bam_file, fas_file, dmnd_results, out_prefix, 
                                 d = result[ctg][str(pos)]
                                 ref = d['reference'].upper()
                                 if ref in ['A', 'T', 'C', 'G']:
-                                    ref_depth = '{0}/{1}'.format(d['{0}_depth'.format(ref)], d['total_depth'])
+                                    ref_depth = f'{d["{0}_depth".format(ref)]}/{d["total_depth"]}'
                                     ref_qual = str(round(float(d['{0}_quality'.format(ref)]), 1))
 
                                 else:
                                     continue
 
                             except KeyError:
-                                print('Position {0} in {1} for feature {2} with reference depth of 0!'
-                                      .format(pos, data['qid'], data['tid']))
+                                print(f'Position {pos} in {data["qid"]} for feature {data["tid"]} with reference depth'
+                                      f' of 0!')
                                 ref = 'N'
-                                ref_depth = '{0}/{1}'.format('0', '0')
+                                ref_depth = '0/0'
                                 ref_qual = '0'
 
                             if n % 3 == 0:
@@ -255,11 +250,10 @@ def cds_extract_quality_and_depth(bam_file, fas_file, dmnd_results, out_prefix, 
                                     bases.append(base)
                                     quals.append(qual)
                                     depths.append(depth)
-                                base, qual, depth = 'p:{0}; f:{1}; b:{2}'.format(pos, strand, ref), ref_qual, ref_depth
+                                base, qual, depth = f'p:{pos}; f:{strand}; b:{ref}', ref_qual, ref_depth
                             else:
                                 if base == 0:
-                                    base, qual, depth = 'p:{0}; f:{1}; b:{2}'.format(pos, strand,
-                                                                                     ref), ref_qual, ref_depth
+                                    base, qual, depth = f'p:{pos}; f:{strand}; b:{ref}', ref_qual, ref_depth
                                 else:
                                     base = base + ref
                                     depth = depth + ',' + ref_depth
@@ -273,7 +267,7 @@ def cds_extract_quality_and_depth(bam_file, fas_file, dmnd_results, out_prefix, 
                         depths.append(depth)
                         txt = ''
                         for i in range(0, len(bases)):
-                            txt = txt + '{0}; d:{1}; q:{2} | '.format(bases[i], depths[i], quals[i])
+                            txt = txt + f'{bases[i]}; d:{depths[i]}; q:{quals[i]} | '
                         txt = txt[:-3]
 
                     elif strand < 0 and q_aa != 'd':
@@ -286,17 +280,17 @@ def cds_extract_quality_and_depth(bam_file, fas_file, dmnd_results, out_prefix, 
                                 d = result[ctg][str(pos)]
                                 ref = d['reference'].upper()
                                 if ref in ['A', 'T', 'C', 'G']:
-                                    ref_depth = '{0}/{1}'.format(d['{0}_depth'.format(ref)], d['total_depth'])
-                                    ref_qual = str(round(float(d['{0}_quality'.format(ref)]), 1))
+                                    ref_depth = f'{d[f"{ref}_depth"]}/{d["total_depth"]}'
+                                    ref_qual = str(round(float(d[f'{ref}_quality']), 1))
 
                                 else:
                                     continue
 
                             except KeyError:
-                                print('Position {0} in {1} for feature {2} with reference depth of 0!'
-                                      .format(pos, data['qid'], data['tid']))
+                                print(f'Position {pos} in {data["qid"]} for feature {data["tid"]} with reference depth'
+                                      f' of 0!')
                                 ref = 'N'
-                                ref_depth = '{0}/{1}'.format('0', '0')
+                                ref_depth = '0/0'
                                 ref_qual = '0'
 
                             if n % 3 == 0:
@@ -304,11 +298,10 @@ def cds_extract_quality_and_depth(bam_file, fas_file, dmnd_results, out_prefix, 
                                     bases.append(base)
                                     quals.append(qual)
                                     depths.append(depth)
-                                base, qual, depth = 'p:{0}; f:{1}; b:{2}'.format(pos, strand, ref), ref_qual, ref_depth
+                                base, qual, depth = f'p:{pos}; f:{strand}; b:{ref}', ref_qual, ref_depth
                             else:
                                 if base == 0:
-                                    base, qual, depth = 'p:{0}; f:{1}; b:{2}'.format(pos, strand,
-                                                                                     ref), ref_qual, ref_depth
+                                    base, qual, depth = f'p:{pos}; f:{strand}; b:{ref}', ref_qual, ref_depth
                                 else:
                                     base = base + ref
                                     depth = depth + ',' + ref_depth
@@ -322,7 +315,7 @@ def cds_extract_quality_and_depth(bam_file, fas_file, dmnd_results, out_prefix, 
                         depths.append(depth)
                         txt = ''
                         for i in range(0, len(bases)):
-                            txt = txt + '{0}; d:{1}; q:{2} | '.format(bases[i], depths[i], quals[i])
+                            txt = txt + f'{bases[i]}; d:{depths[i]}; q:{quals[i]} | '
                         txt = txt[:-3]
                     else:
                         txt = ''
