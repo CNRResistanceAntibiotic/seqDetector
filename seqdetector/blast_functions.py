@@ -19,10 +19,8 @@ def make_blastn_database(fasta_file, force=False, threads=8):
 
 
 def run_blastn(blastn_db, query_file, pass_pid=70, force=True, evalue=0.0001, threads=8, out_file=""):
-
     if not force and os.path.exists(out_file):
         print(f'\nResult file {out_file} already exists')
-
     else:
         fmt = '\"6 qseqid frames sallseqid slen qstart qend sstart send length pident nident ppos positive mismatch ' \
               'gapopen gaps qseq sseq\"'
@@ -36,17 +34,13 @@ def run_blastn(blastn_db, query_file, pass_pid=70, force=True, evalue=0.0001, th
 def load_blastn_result(result_file, target_file, pass_pid=70, pass_pcv=70):
     target_dic = load_fasta(target_file)
     blastn_results = []
-    header = 'qid strand tid tlen qstart qend tstart tend ' \
-             'alen pid nid ppos npos mismatch gapopen gap ' \
-             'qseq tseq'.split(' ')
+    header = 'qid strand tid tlen qstart qend tstart tend alen pid nid ppos npos mismatch gapopen gap qseq' \
+             ' tseq'.split(' ')
     with open(result_file) as inf:
         for line in inf:
             data = dict(zip(header, line.strip().split('\t')))
             q_id = data['qid']
             t_id = data['tid']
-            t_des = {}
-            """
-            print(target_dic[t_id].id)
             for item in target_dic[t_id].description.split(';'):
                 try:
                     key, value = item.split(':')
@@ -56,18 +50,14 @@ def load_blastn_result(result_file, target_file, pass_pid=70, pass_pcv=70):
                 except Exception as e:
                     print(e)
                     t_des = {}
-            print("mama")
-            """
             item_dic = {'seqtype': 'dna', 'func': 'divers', 'mech': 'divers', 'known_dna_snp': ''}
             for item in item_dic.keys():
                 if item in t_des.keys():
                     data[item] = t_des[item]
                 else:
                     data[item] = item_dic[item]
-
             q_frame = int(data['strand'].split('/')[0])
             t_frame = int(data['strand'].split('/')[1])
-
             if q_frame > 0 and t_frame > 0:
                 data['strand'] = 1
             elif q_frame < 0 and t_frame > 0:
@@ -209,7 +199,6 @@ def cds_extract_quality_and_depth(bam_file, fas_file, dmnd_results, out_prefix, 
         for item in ['prot_snp', 'prot_sub']:
             if data[item]:
                 for snp in data[item]:
-                    # print data['tid'], snp, strand
                     prot_pos = snp['q_prot_pos']
                     t_aa = snp['t_aa']
                     q_aa = snp['q_aa']
@@ -223,11 +212,7 @@ def cds_extract_quality_and_depth(bam_file, fas_file, dmnd_results, out_prefix, 
                         dna_pos = range(dna_pos, dna_pos + (size * 3))
                         bases, quals, depths = [], [], []
                         base, qual, depth = 0, 0, 0
-                        # print data['tid']
                         for n, pos in enumerate(dna_pos):
-                            # x = result[ctg].keys()
-                            # x.sort()
-                            # print x
                             try:
                                 d = result[ctg][str(pos)]
                                 ref = d['reference'].upper()

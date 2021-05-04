@@ -12,6 +12,7 @@ from collections import OrderedDict
 
 import pandas as pd
 from Bio import SeqIO
+from Bio.Alphabet import generic_dna
 from Bio.Seq import Seq
 from Bio.SeqFeature import FeatureLocation
 from Bio.SeqFeature import SeqFeature
@@ -603,8 +604,8 @@ def write_gbk(results, query_dic, out_dir, out_prefix):
     n = 0
     for key in keys:
         records = rec_dic[key]
-        rec = SeqRecord(Seq(str(query_dic[key].seq)), id=key, name=key, description='',
-                        annotations={"molecule_type": "DNA"})
+        rec = SeqRecord(Seq(str(query_dic[key].seq)), id=key, name=key, description='')
+        rec.seq.alphabet = generic_dna
         for data in records:
             if test_cds(data) == 1:
                 feature = SeqFeature(FeatureLocation(data['qstart'] - 1, data['qend'], strand=data['strand']),
@@ -788,10 +789,13 @@ def main(args):
                   f' {len(dmnd_results) + len(blastn_results)}')
             """
         if taxonomy_filter_detect == 'lax':
+            print(
+                f'\nNumber of detected proteomic features before lax taxonomic and overlap filtering: {len(dmnd_results)} \n')
             dmnd_results = overlap_filter(dmnd_results, taxonomy, pass_overlap)
-            print(f'\nNumber of detected features after lax taxonomic and overlap filtering: {len(dmnd_results)} \n')
+            print(f'\nNumber of detected proteomic features after lax taxonomic and overlap filtering: {len(dmnd_results)} \n')
+            print(f'\nNumber of detected features nucleotidic before lax taxonomic and overlap filtering: {len(blastn_results)}')
             blastn_results = overlap_filter(blastn_results, taxonomy, pass_overlap)
-            print(f'\nNumber of detected features after lax taxonomic and overlap filtering: {len(blastn_results)}')
+            print(f'\nNumber of detected features nucleotidic after lax taxonomic and overlap filtering: {len(blastn_results)}')
             print(
                 f'\n######## Number of detected features after lax taxonomic and overlap filtering:'
                 f' {len(dmnd_results) + len(blastn_results)} ########')
