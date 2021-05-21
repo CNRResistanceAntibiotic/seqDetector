@@ -12,6 +12,7 @@ from collections import OrderedDict
 
 import pandas as pd
 from Bio import SeqIO
+from Bio.Alphabet import generic_dna
 from Bio.Seq import Seq
 from Bio.SeqFeature import FeatureLocation
 from Bio.SeqFeature import SeqFeature
