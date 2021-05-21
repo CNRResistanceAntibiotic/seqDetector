@@ -604,6 +604,7 @@ def write_gbk(results, query_dic, out_dir, out_prefix):
     for key in keys:
         records = rec_dic[key]
         rec = SeqRecord(Seq(str(query_dic[key].seq)), id=key, name=key, description='')
+        rec.seq.alphabet = generic_dna
         for data in records:
             if test_cds(data) == 1:
                 feature = SeqFeature(FeatureLocation(data['qstart'] - 1, data['qend'], strand=data['strand']),

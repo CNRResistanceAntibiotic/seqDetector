@@ -4,6 +4,7 @@ import sys
 import numpy as np
 from collections import OrderedDict
 from Bio import SeqIO
+from Bio.Alphabet import generic_dna
 from Bio.Seq import Seq
 from Bio.SeqRecord import SeqRecord
 import pandas as pd
@@ -222,9 +223,8 @@ def write_gbk(results, query_dic, out_dir, out_prefix):
     for key in keys:
         records = rec_dic[key]
         rec = SeqRecord(Seq(str(query_dic[key].seq)), id=key, name=key, description='')
-        # source = ''
+        rec.seq.alphabet = generic_dna
         for data in records:
-
             feature = SeqFeature(FeatureLocation(data['qstart'] - 1, data['qend'], strand=data['strand']),
                                  type='misc_feature', qualifiers={})
 
