@@ -201,7 +201,7 @@ def write_fasta(results, out_dir, out_prefix):
             sorted_pivot = True
             # case of non "ctg_1" format
             for dna in dna_records:
-                if len(dna.id.split('_')[1]) == 0:
+                if len(dna.id.split('_')[1]) == 0 and not dna.id.split('_')[1].isnumeric():
                     sorted_pivot = False
             if sorted_pivot:
                 dna_records = sorted(dna_records, key=lambda x: (int(x.id.split('_')[1]) * 1E8 + int(x.id.split('__')[1])))
