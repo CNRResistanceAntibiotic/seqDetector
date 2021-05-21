@@ -74,43 +74,42 @@ def overlap_filter(results, pass_overlap=50):
 
 def view_dna_result(blastn_results):
     for data in blastn_results:
-        print('\nTarget: {0}\ttarget length: {1}\tstart: {2}\tend: {3}'.format(data['tid'], data['tlen'],
-                                                                               data['tstart'], data['tend']))
-        print('Query: {0}\tquery start: {1}\tquery end: {2}\tstrand: {3}'.format(data['qid'], data['qstart'], data['qend'],
-                                                                             data['strand']))
-        print('Perc_pos: {0}\tPerc_id: {1}\ttarget_cov: {2}'.format(data['ppos'], data['pid'], data['pcv']))
+        print(f'\nTarget: {data["tid"]}\ttarget length: {data["tlen"]}\tstart: {data["tstart"]}\tend: {data["tend"]}')
+        print(
+            f'Query: {data["qid"]}\tquery start: {data["qstart"]}\tquery end: {data["qend"]}\tstrand: {data["strand"]}')
+        print(f'Perc_pos: {data["ppos"]}\tPerc_id: {data["pid"]}\ttarget_cov: {data["pcv"]}')
         print('Blastn:')
         # if data['strand'] > 0:
-        print('Detected: {0}'.format(data['qseq']))
-        print('DBase   : {0}'.format(data['tseq']))
+        print(f'Detected: {data["qseq"]}')
+        print(f'DBase   : {data["tseq"]}')
         if 'warning' in data:
-            print('Sequence warning: {0}'.format(data['warning']))
+            print(f'Sequence warning: {data["warning"]}')
 
         if 'mean_qual' in data:
-            print('Max base quality: {0}\tMean base quality: {1}\tMin base quality: {2}'
-                  .format(data['max_qual'], data['mean_qual'], data['min_qual']))
-            print('Max base depth: {0}\tMean base depth: {1}\tMin base depth: {2}'
-                  .format(data['max_depth'], data['mean_depth'], data['min_depth']))
+            print(
+                f'Max base quality: {data["max_qual"]}\tMean base quality: {data["mean_qual"]}\tMin base quality: {data["min_qual"]}')
+            print(
+                f'Max base depth: {data["max_depth"]}\tMean base depth: {data["mean_depth"]}\tMin base depth: {data["min_depth"]}')
         if 'dna_snp' in data:
             snps = []
             for d in data['dna_snp']:
                 # print d['dna_data']
                 if 'dna_data' in d:
-                    snps.append('{0}{1}{2} [{3}]'.format(d['t_base'], d['t_dna_pos'], d['q_base'], d['dna_data']))
+                    snps.append(f'{d["t_base"]}{d["t_dna_pos"]}{d["q_base"]} [{d["dna_data"]}]')
                 else:
-                    snps.append('{0}{1}{2}'.format(d['t_base'], d['t_dna_pos'], d['q_base']))
-            print('{0} dna snp(s): {1}'.format(len(data['dna_snp']), ', '.join(snps)))
+                    snps.append(f'{d["t_base"]}{d["t_dna_pos"]}{d["q_base"]}')
+            print(f'{len(data["dna_snp"])} dna snp(s): {", ".join(snps)}')
         if 'dna_sub' in data:
             subs = []
             for d in data['dna_sub']:
                 # print d['dna_data']
                 if 'dna_data' in d:
-                    subs.append('{0}{1}{2} [{3}]'.format(d['t_base'], d['t_dna_pos'], d['q_base'], d['dna_data']))
+                    subs.append(f'{d["t_base"]}{d["t_dna_pos"]}{d["q_base"]} [{d["dna_data"]}]')
                 else:
-                    subs.append('{0}{1}{2}'.format(d['t_base'], d['t_dna_pos'], d['q_base']))
-            print('{0} dna sub(s): {1}'.format(len(data['dna_sub']), ', '.join(subs)))
+                    subs.append(f'{d["t_base"]}{d["t_dna_pos"]}{d["q_base"]}')
+            print(f'{len(data["dna_sub"])} dna sub(s): {", ".join(subs)}')
         if 'known_dna_snp' in data:
-            print('DBse snp: {0}'.format(', '.join(data['known_dna_snp'].split('|'))))
+            print(f'DBse snp: {", ".join(data["known_dna_snp"].split("|"))}')
         print('')
 
 
@@ -124,14 +123,13 @@ def dna_data_to_dict(id, d, dna_data, item):
     mut = ""
 
     if item in ['prot_snp', 'prot_sub']:
-        mut = OrderedDict([('Feature', id), ('Mutation', '{0}{1}{2}'.format(d['t_aa'], d['t_prot_pos'], d['q_aa'])),
+        mut = OrderedDict([('Feature', id), ('Mutation', f'{d["t_aa"]}{d["t_prot_pos"]}{d["q_aa"]}'),
                            ('Mutation type', type_mut), ('DNA position', pos), ('DNA strand', strand), ('Codon', base),
                            ('Sequencing depth', depth), ('Base quality', qual_base)])
     elif item in ['dna_snp', 'dna_sub']:
-        mut = OrderedDict([('Feature', id), ('Mutation', '{0}{1}{2}'.format(d['t_base'], d['t_dna_pos'], d['q_base'])),
+        mut = OrderedDict([('Feature', id), ('Mutation', f'{d["t_base"]}{d["t_dna_pos"]}{d["q_base"]}'),
                            ('Mutation type', type_mut), ('DNA position', pos), ('DNA strand', strand),
-                           ('Codon/base', base),
-                           ('Sequencing depth', depth), ('Base quality', qual_base)])
+                           ('Codon/base', base), ('Sequencing depth', depth), ('Base quality', qual_base)])
     return mut
 
 
@@ -139,21 +137,21 @@ def description(data):
     snps = []
     if 'prot_snp' in data:
         for d in data['prot_snp']:
-            snps.append('{0}{1}{2}'.format(d['t_aa'], d['t_prot_pos'], d['q_aa']))
+            snps.append(f'{d["t_aa"]}{d["t_prot_pos"]}{d["q_aa"]}')
         snps = '|'.join(snps)
     elif 'dna_snp' in data:
         for d in data['dna_snp']:
-            snps.append('{0}{1}{2}'.format(d['t_base'], d['t_dna_pos'], d['q_base']))
+            snps.append(f'{d["t_base"]}{d["t_dna_pos"]}{d["q_base"]}')
         snps = '|'.join(snps)
 
     subs = []
     if 'prot_sub' in data:
         for d in data['prot_sub']:
-            subs.append('{0}{1}{2}'.format(d['t_aa'], d['t_prot_pos'], d['q_aa']))
+            subs.append(f'{d["t_aa"]}{d["t_prot_pos"]}{d["q_aa"]}')
         subs = '|'.join(subs)
     elif 'dna_sub' in data:
         for d in data['dna_sub']:
-            subs.append('{0}{1}{2}'.format(d['t_base'], d['t_dna_pos'], d['q_base']))
+            subs.append(f'{d["t_base"]}{d["t_dna_pos"]}{d["q_base"]}')
         subs = '|'.join(subs)
 
     try:
@@ -165,19 +163,18 @@ def description(data):
                                     data['min_qual'], data['mean_qual'], data['max_qual'],
                                     snps)
     except KeyError:
-        des = 'function:{0}, mechanism:{1}, reference_sequence: {2}, perc_identity:{3}, perc_coverage:{4}, ' \
-              'known_sub:{5}'.format(data['func'], data['mech'], data['tid'].split('::')[-1], \
-                                    data['pid'], data['pcv'], snps)
+        des = f'function:{data["func"]}, mechanism:{data["mech"]}, reference_sequence: {data["tid"].split("::")[-1]},' \
+              f' perc_identity:{data["pid"]}, perc_coverage:{data["pcv"]}, known_sub:{snps}'
     return des
 
 
 def write_fasta(results, out_dir, out_prefix):
-    aa_outfile = os.path.join(out_dir, '{0}.faa'.format(out_prefix))
-    dna_outfile = os.path.join(out_dir, '{0}.fna'.format(out_prefix))
+    aa_outfile = os.path.join(out_dir, f'{out_prefix}.faa')
+    dna_outfile = os.path.join(out_dir, f'{out_prefix}.fna')
     aa_records = []
     dna_records = []
     for data in results:
-        id = '{0}__{1}__{2}__f{3}__{4}'.format(data['qid'], data['qstart'], data['qend'], data['strand'], data['tid'])
+        id = f'{data["qid"]}__{data["qstart"]}__{data["qend"]}__f{data["strand"]}__{data["tid"]}'
         des = description(data)
 
         if 'qprot' in data:
@@ -218,14 +215,13 @@ def write_gbk(results, query_dic, out_dir, out_prefix):
             rec_dic[key] = [data]
         else:
             rec_dic[key].append(data)
-    # get keys in a list
+    # get keys in a list
     *keys, = rec_dic
     keys.sort()
     n = 0
     for key in keys:
         records = rec_dic[key]
-        rec = SeqRecord(Seq(str(query_dic[key].seq)), id=key, name=key, description='',
-                        annotations={"molecule_type": "DNA"})
+        rec = SeqRecord(Seq(str(query_dic[key].seq)), id=key, name=key, description='')
         # source = ''
         for data in records:
 
@@ -247,10 +243,10 @@ def write_gbk(results, query_dic, out_dir, out_prefix):
         rec.features = sorted(rec.features, key=lambda feature: feature.location.start)
 
         for feature in rec.features:
-            feature.qualifiers = OrderedDict([('locus_tag', 'DET_{0}'.format(n + 1))] + list(feature.qualifiers.items()))
+            feature.qualifiers = OrderedDict([('locus_tag', f'DET_{n + 1}')] + list(feature.qualifiers.items()))
             n += 1
 
-        out_file = os.path.join(out_dir, '{0}_{1}_mlst.gbk'.format(out_prefix, rec.id))
+        out_file = os.path.join(out_dir, f'{out_prefix}_{rec.id}_mlst.gbk')
         with open(out_file, 'w') as out_f:
             SeqIO.write([rec], out_f, 'genbank')
 
@@ -325,8 +321,8 @@ def identify_mlst_profile(mlst_dic, mlst_list, blastn_results, id_prefix, out_pr
     result = OrderedDict([('MLST_name', out_prefix), ('ST', ST)] + zip_list)
     df = pd.DataFrame(result, index=[out_prefix])
     print(df)
-    df.to_csv('{0}_{1}.csv'.format(id_prefix, out_prefix), sep='\t', index=False)
-    df.to_html('{0}_{1}.html'.format(id_prefix, out_prefix))
+    df.to_csv(f'{id_prefix}_{out_prefix}.csv', sep='\t', index=False)
+    df.to_html(f'{id_prefix}_{out_prefix}.html')
     return blastn_results
 
 
@@ -377,7 +373,7 @@ def write_csv_html(results, mut_prefix, id_prefix, out_prefix, pass_alarm_qual=2
                                     depth_ref, depth_total = depth.split('/')
                                     try:
                                         if int(depth_ref) < pass_alarm_depth:
-                                            depth_alarm = 'depth<{0}'.format(pass_alarm_depth)
+                                            depth_alarm = f'depth<{pass_alarm_depth}'
                                             break
                                     except Exception as e:
                                         print(e)
@@ -391,7 +387,7 @@ def write_csv_html(results, mut_prefix, id_prefix, out_prefix, pass_alarm_qual=2
                                     try:
                                         frac = int(depth_ref) / float(depth_total)
                                         if frac < pass_alarm_frac:
-                                            frac_alarm = 'frac<{0}'.format(pass_alarm_frac)
+                                            frac_alarm = f'frac<{pass_alarm_frac}'
                                             break
                                     except Exception as e:
                                         print(e)
@@ -403,7 +399,7 @@ def write_csv_html(results, mut_prefix, id_prefix, out_prefix, pass_alarm_qual=2
                                 for qual in quals.split(','):
                                     try:
                                         if float(qual) < pass_alarm_qual:
-                                            qual_alarm = 'qual<{0}'.format(pass_alarm_qual)
+                                            qual_alarm = f'qual<{pass_alarm_qual}'
                                             break
                                     except Exception as e:
                                         print(e)
@@ -423,14 +419,13 @@ def write_csv_html(results, mut_prefix, id_prefix, out_prefix, pass_alarm_qual=2
                     alarm = ''
 
                 if alarm == '':
-                    subs.append('{0}{1}{2}'.format(d['t_base'], d['t_dna_pos'], d['q_base']))
+                    subs.append(f'{d["t_base"]}{d["t_dna_pos"]}{d["q_base"]}')
                 else:
-                    subs.append('{0}{1}{2} #{3}#'.format(d['t_base'], d['t_dna_pos'], d['q_base'], alarm))
+                    subs.append(f'{d["t_base"]}{d["t_dna_pos"]}{d["q_base"]} #{alarm}#')
 
                 if mutations:
                     df = pd.DataFrame.from_dict(mutations)
-                    df.to_html('{0}_{1}_{2}_{3}-{4}_mut.html'.format(mut_prefix,
-                                                                     data['tid'].replace(':', '_').replace('(', '').replace(
+                    df.to_html('{0}_{1}_{2}_{3}-{4}_mut.html'.format(mut_prefix, data['tid'].replace(':', '_').replace('(', '').replace(
                                                                     ')', '').replace('\'', 'pr'), data['qid'],
                                                                      data['qstart'], data['qend']), index=False)
                     df.to_csv('{0}_{1}_{2}_{3}-{4}_mut.csv'.format(mut_prefix,
@@ -459,8 +454,8 @@ def write_csv_html(results, mut_prefix, id_prefix, out_prefix, pass_alarm_qual=2
         records.append(d)
     df = pd.DataFrame.from_dict(records)
     df.sort_values(['Function', 'DBase name'], ascending=[True, True], inplace=True)
-    df[header].to_csv('{0}_{1}_details.csv'.format(id_prefix, out_prefix), sep='\t', index=False)
-    df[header].to_html('{0}_{1}_details.html'.format(id_prefix, out_prefix), index=False)
+    df[header].to_csv(f'{id_prefix}_{out_prefix}_details.csv', sep='\t', index=False)
+    df[header].to_html(f'{id_prefix}_{out_prefix}_details.html', index=False)
 
 
 def main(args):
@@ -468,10 +463,10 @@ def main(args):
     # Check working directory
     wk_dir = args.wk_dir
     if glob.glob(wk_dir) is None:
-        print("\nDirectory {0} not found!\n".format(wk_dir))
+        print(f"\nDirectory {wk_dir} not found!\n")
         exit(1)
     else:
-        print("\nDirectory {0} found".format(wk_dir))
+        print(f"\nDirectory {wk_dir} found")
 
     # Prefix
     out_prefix = args.out_prefix
@@ -483,10 +478,10 @@ def main(args):
 
     # Check sample file
     if not os.path.exists(sample_file):
-        print("\nSample file {0} not found!\n".format(sample_file))
+        print(f"\nSample file {sample_file} not found!\n")
         exit(1)
     else:
-        print("\nSample file: {0}".format(sample_file))
+        print(f"\nSample file: {sample_file}")
 
     # Load sample name and species if provided (not required)
     sample_dic = load_sample_name(sample_file)
@@ -500,17 +495,17 @@ def main(args):
         try:
             assembly_file = glob.glob(os.path.join(wk_dir, sample_name + '.fasta'))[0]
             file_list.append(assembly_file)
-            print('Sample {0}: {1}'.format(sample_name, assembly_file))
+            print(f'Sample {sample_name}: {assembly_file}')
         except IndexError:
             assembly_file = glob.glob(os.path.join(wk_dir, sample_name + '.fasta'))[0]
-            print('Sample {0}: Assembly file not found! Search For {1}'.format(sample_name, assembly_file))
+            print(f'Sample {sample_name}: Assembly file not found! Search For {assembly_file}')
 
     # Check the location of MLST file:
     set_file = args.set_file
     set_dic = {}
     db_dir = ""
     if os.path.exists(set_file):
-        print("\nSetting file: {0}".format(set_file))
+        print(f"\nSetting file: {set_file}")
         set_dic = load_set_file(set_file)
         db_dir = os.path.dirname(set_file)
     else:
@@ -519,11 +514,11 @@ def main(args):
 
     print("\nFeature detection parameters:")
     pass_pid = float(args.perc_cv)
-    print("  Identity threshold: {0}%".format(pass_pid))
+    print(f"  Identity threshold: {pass_pid}%")
     pass_pcv = float(args.perc_id)
-    print("  Coverage threshold: {0}%".format(pass_pcv))
+    print(f"  Coverage threshold: {pass_pcv}%")
     pass_overlap = int(args.overlap)
-    print("  Maximum feature overlap: {0}-bases\n".format(pass_overlap))
+    print(f"  Maximum feature overlap: {pass_overlap}-bases\n")
 
     # Number of threads
     threads = int(args.threads)
@@ -542,7 +537,7 @@ def main(args):
 
         # Set taxonomy for taxonomy-based filtering
         taxonomy = sample_dic[sample_name].lower()
-        title = "~~~~  {0}/{1} sample: {2} species: {3}  ~~~~".format(n + 1, len(file_list), sample_name, taxonomy)
+        title = f"~~~~  {n + 1}/{len(file_list)} sample: {sample_name} species: {taxonomy}  ~~~~"
         print("\n\n")
         print("~" * len(title))
         print(title)
@@ -552,9 +547,8 @@ def main(args):
         mlst_db = ""
         if 'mlst' in set_dic[taxonomy]:
             mlst_db = set_dic[taxonomy]['mlst']
-
         else:
-            print("No schema MLST for {0}", taxonomy)
+            print('No schema MLST for {0}', taxonomy)
             exit(1)
 
         mlst_schema = []
@@ -565,21 +559,21 @@ def main(args):
             mlst_schema = [mlst_db[1]]
 
         for schema in mlst_schema:
-            print("Current schema: {0}".format(schema))
-            mlst_name = '{0}_{1}'.format(mlst_db[0], schema)
+            print(f"Current schema: {schema}")
+            mlst_name = f'{mlst_db[0]}_{schema}'
 
             mlst_dir = os.path.join(db_dir, "dbMLST", mlst_name, 'pubmlst_download')
-            print("MLST directory selected : {0}".format(mlst_dir))
+            print(f"MLST directory selected : {mlst_dir}")
             mlst_scheme_file = os.path.join(mlst_dir, 'profile.txt')
-            dna_target_file = os.path.join(wk_dir, 'profile_{0}.fasta'.format(schema))
+            dna_target_file = os.path.join(wk_dir, f'profile_{schema}.fasta')
 
             if not os.path.exists(mlst_scheme_file):
-                print("\nNo MLST scheme defined for {0} in {1}\n".format(taxonomy, set_file))
+                print(f"\nNo MLST scheme defined for {taxonomy} in {set_file}\n")
                 dna_target_file, mlst_scheme_file = 0, 0
                 exit(1)
             if not os.path.exists(dna_target_file):
-                print("\nNo fasta file for {0}\n".format(taxonomy))
-                cmd = 'cat {0}/*.tfa > {1}/profile_{2}.fasta'.format(mlst_dir, wk_dir, schema)
+                print(f"\nNo fasta file for {taxonomy}\n")
+                cmd = f'cat {mlst_dir}/*.tfa > {wk_dir}/profile_{schema}.fasta'
                 print("Fasta file created ! ")
                 print(cmd)
                 os.system(cmd)
@@ -587,15 +581,14 @@ def main(args):
             # Make blastn database, launch blastn and load the results
             blastn_results = []
 
-            out_blastn_file = os.path.join(os.path.dirname(query_file), 'blastn_output_{0}_{1}.csv'
-                                           .format(schema, sample_name))
+            out_blastn_file = os.path.join(os.path.dirname(query_file), f'blastn_output_{schema}_{sample_name}.csv')
 
             if os.path.exists(dna_target_file):
                 blastn_db = make_blastn_database(dna_target_file, force)
                 blastn_result_file = run_blastn(blastn_db, query_file, pass_pid, force, 0.0001, 8, out_blastn_file)
 
                 blastn_results = load_blastn_result(blastn_result_file, dna_target_file, pass_pid, pass_pcv)
-                print('\nNumber of detected features: {0}'.format(len(blastn_results)))
+                print(f'\nNumber of detected features: {len(blastn_results)}')
 
                 for element in blastn_results:
                     if "uidA" in element:
@@ -603,9 +596,9 @@ def main(args):
 
                 # Filter the results for overlaps
                 blastn_results = overlap_filter(blastn_results, pass_overlap)
-                print('Number of detected features after overlap filtering: {0}'.format(len(blastn_results)))
+                print(f'Number of detected features after overlap filtering: {len(blastn_results)}')
             else:
-                print("\nMLST database file {0} not found!\n".format(dna_target_file))
+                print(f"\nMLST database file {dna_target_file} not found!\n")
                 exit(1)
 
             query_dic = {}
@@ -629,28 +622,26 @@ def main(args):
                 # Show the detected DNA features
                 view_dna_result(blastn_results)
 
-
-
             # Set the directory to store depth and quality data
-            mut_dir = os.path.join(os.path.dirname(bam_file), 'Mutations_depth_quality_{0}'.format(schema))
+            mut_dir = os.path.join(os.path.dirname(bam_file), f'Mutations_depth_quality_{schema}')
             if not os.path.exists(mut_dir):
                 os.mkdir(mut_dir)
             mut_prefix = os.path.join(mut_dir, os.path.splitext(os.path.basename(query_file))[0].split('_')[0])
             mlst_id_prefix = os.path.splitext(query_file)[0]
 
             if os.path.exists(mlst_scheme_file):
-                # Load MLST profils
-                print('MLST name: {0}'.format(mlst_name))
+                # Load MLST profil
+                print(f'MLST name: {mlst_name}')
                 mlst_dic, mlst_present_list = read_mlst_scheme(mlst_scheme_file)
 
-                # Identify ST from MLST profils
-                print('Number of MLST profiles: {0} for genes: {1}\n'.format(len(mlst_dic.keys()), ', '.join(mlst_present_list)))
+                # Identify ST from MLST profil
+                print(f'Number of MLST profiles: {len(mlst_dic.keys())} for genes: {", ".join(mlst_present_list)}\n')
 
                 identify_mlst_profile(mlst_dic, mlst_present_list, blastn_results, mlst_id_prefix, out_prefix)
 
             if len(blastn_results) > 0:
                 write_csv_html(blastn_results, mut_prefix, mlst_id_prefix, out_prefix)
-                out_dir = os.path.join(os.path.dirname(query_file), 'Detected_sequences_{0}'.format(schema))
+                out_dir = os.path.join(os.path.dirname(query_file), f'Detected_sequences_{schema}')
                 if not os.path.exists(out_dir):
                     os.mkdir(out_dir)
                 write_gbk(blastn_results, query_dic, out_dir, out_prefix)
