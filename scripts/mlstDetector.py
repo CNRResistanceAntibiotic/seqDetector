@@ -218,7 +218,8 @@ def write_gbk(results, query_dic, out_dir, out_prefix):
     n = 0
     for key in keys:
         records = rec_dic[key]
-        rec = SeqRecord(Seq(str(query_dic[key].seq)), id=key, name=key, description='')
+        rec = SeqRecord(Seq(str(query_dic[key].seq)), id=key, name=key, description='',
+                        annotations={"molecule_type": "DNA"})
         for data in records:
             feature = SeqFeature(FeatureLocation(data['qstart'] - 1, data['qend'], strand=data['strand']),
                                  type='misc_feature', qualifiers={})
