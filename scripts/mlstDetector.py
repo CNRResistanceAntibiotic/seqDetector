@@ -4,7 +4,6 @@ import sys
 import numpy as np
 from collections import OrderedDict
 from Bio import SeqIO
-from Bio.Alphabet import generic_dna
 from Bio.Seq import Seq
 from Bio.SeqRecord import SeqRecord
 import pandas as pd
@@ -156,13 +155,10 @@ def description(data):
         subs = '|'.join(subs)
 
     try:
-        des = 'function:{0}, mechanism:{1}, reference_sequence: {2}, perc_identity:{3}, perc_coverage:{4}, ' \
-              'min_depth:{5}, mean_depth:{6}, max_depth:{7}, ' \
-              'min_quality:{8}, mean_quality:{9}, max_quality:{10}, ' \
-              'known_sub:{11}'.format(data['func'], data['mech'], data['tid'].split('::')[-1], data['pid'], data['pcv'],
-                                    data['min_depth'], data['mean_depth'], data['max_depth'],
-                                    data['min_qual'], data['mean_qual'], data['max_qual'],
-                                    snps)
+        des = f'function:{data["func"]}, mechanism:{data["mech"]}, reference_sequence: {data["tid"].split("::")[-1]},' \
+              f' perc_identity:{data["pid"]}, perc_coverage:{data["pcv"]}, min_depth:{data["min_depth"]},' \
+              f' mean_depth:{data["mean_depth"]}, max_depth:{data["max_depth"]}, min_quality:{data["min_qual"]},' \
+              f' mean_quality:{data["mean_qual"]}, max_quality:{data["max_qual"]}, known_sub:{snps}'
     except KeyError:
         des = f'function:{data["func"]}, mechanism:{data["mech"]}, reference_sequence: {data["tid"].split("::")[-1]},' \
               f' perc_identity:{data["pid"]}, perc_coverage:{data["pcv"]}, known_sub:{snps}'
@@ -223,7 +219,6 @@ def write_gbk(results, query_dic, out_dir, out_prefix):
     for key in keys:
         records = rec_dic[key]
         rec = SeqRecord(Seq(str(query_dic[key].seq)), id=key, name=key, description='')
-        rec.seq.alphabet = generic_dna
         for data in records:
             feature = SeqFeature(FeatureLocation(data['qstart'] - 1, data['qend'], strand=data['strand']),
                                  type='misc_feature', qualifiers={})
@@ -509,7 +504,7 @@ def main(args):
         set_dic = load_set_file(set_file)
         db_dir = os.path.dirname(set_file)
     else:
-        print('\nSetting file {0} not found!\n'.format(set_file))
+        print(f'\nSetting file {set_file} not found!\n')
         exit(1)
 
     print("\nFeature detection parameters:")
@@ -548,7 +543,7 @@ def main(args):
         if 'mlst' in set_dic[taxonomy]:
             mlst_db = set_dic[taxonomy]['mlst']
         else:
-            print('No schema MLST for {0}', taxonomy)
+            print(f"No schema MLST for {taxonomy}")
             exit(1)
 
         mlst_schema = []
