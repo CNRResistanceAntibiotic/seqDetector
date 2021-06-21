@@ -44,7 +44,6 @@ def load_blastn_result(result_file, target_file, pass_pid=70, pass_pcv=70):
             t_des = {}
             for item in target_dic[t_id].description.split(';'):
                 if item:
-                    print(item)
                     try:
                         key, value = item.split(':')
                         if key == 'dna_snp':

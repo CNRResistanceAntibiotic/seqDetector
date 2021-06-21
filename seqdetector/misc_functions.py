@@ -316,8 +316,9 @@ def extract_substitutions(data, wk_dir):
     known_snps = known_snps.split(',')
     known_pos = []
     for x in known_snps:
-        if re.match('[A-Zi][0-9]+[A-Zd]', x) and "STOP" not in x and "DEL" not in x:
-            known_pos.append(int(x[1:len(x) - 1]))
+        if "stop" not in x.lower() and "del" not in x.lower() and x:
+            m = re.search(r'([A-Z]+)([0-9]+)([A-Z]+)', x)
+            known_pos.append(int(m.group(2)))
     known_pos = list(set(known_pos))
     indel = 0
     for i in dif_indexes:
@@ -490,7 +491,15 @@ def extract_mutations(data):
     # extract mutations from alignement and depth from bam
     muts = []
     known_snps = known_snps.split(',')
-    known_pos = list(set([int(x[1:len(x) - 1]) for x in known_snps if re.match('[A-Zi][0-9]+[A-Zd]', x)]))
+
+    known_pos = []
+
+    for x in known_snps:
+        if "stop" not in x.lower() and "del" not in x.lower() and x:
+            m = re.search(r'([A-Z]+)([0-9]+)([A-Z]+)', x)
+            known_pos.append(int(m.group(2)))
+
+    known_pos = list(set(known_pos))
     indel = 0
     for i in dif_indexes:
         t_dna_pos = i + 1 - str(tseq)[0:i].count('-')
