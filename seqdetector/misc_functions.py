@@ -316,6 +316,8 @@ def extract_substitutions(data, wk_dir):
     known_snps = known_snps.split(',')
     known_pos = []
     for x in known_snps:
+        print(x)
+        print(data)
         if "stop" not in x.lower() and "del" not in x.lower() and x:
             m = re.search(r'([A-Z]+)([0-9]+)([A-Z]+)', x)
             known_pos.append(int(m.group(2)))
@@ -368,10 +370,6 @@ def extract_substitutions(data, wk_dir):
 
     # classify the mutation as known (snps) or unknown (subs)
     subs, snps = [], []
-    if "gyrA" in data["tid"]:
-        print(data)
-        print(unclassified_subs)
-        print(known_pos)
     if known_snps != ['']:
         for m in unclassified_subs:
             if m['t_prot_pos'] in known_pos:
@@ -385,10 +383,6 @@ def extract_substitutions(data, wk_dir):
                 subs.append(m)
     else:
         subs = unclassified_subs
-
-    if "gyrA" in data["tid"]:
-        print(snps)
-        print(subs)
 
     # update data before to return
     data['pid'] = pid
@@ -575,11 +569,6 @@ def read_bam_count(filename, depth_pass=20, qual_pass=20, fraction_pass=0.8):
         alarm = []
         # for n, line in enumerate(inf_f):
         for row in reader:
-            # line = line.strip().split('\t')
-            # if n == 0:
-            #    header = line
-            # else:
-
             ctg = row['ID']
             position = row['position']
             ref = row['reference'].upper()

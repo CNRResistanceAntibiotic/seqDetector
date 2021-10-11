@@ -784,7 +784,7 @@ def main(args):
             """
             dmnd_results = taxonomy_filter_detect(dmnd_results, taxonomy)
             blastn_results = taxonomy_filter_detect(blastn_results, taxonomy)
-            print(f'Number of detected features after stric taxonomic filtering:'
+            print(f'Number of detected features after strict taxonomic filtering:'
                   f' {len(dmnd_results) + len(blastn_results)}')
             """
         if taxonomy_filter_detect == 'lax':
