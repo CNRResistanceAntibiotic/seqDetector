@@ -316,8 +316,6 @@ def extract_substitutions(data, wk_dir):
     known_snps = known_snps.split(',')
     known_pos = []
     for x in known_snps:
-        print(x)
-        print(data)
         if "stop" not in x.lower() and "del" not in x.lower() and x:
             m = re.search(r'([A-Z]+)([0-9]+)([A-Z]+)', x)
             known_pos.append(int(m.group(2)))

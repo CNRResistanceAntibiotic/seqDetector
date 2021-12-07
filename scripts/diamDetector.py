@@ -295,25 +295,22 @@ def dna_data_to_dict(id, d, dna_data, item):
 def write_csv_html(merged_results, mut_prefix, id_prefix, database, pass_alarm_qual=20, pass_alarm_depth=30,
                    pass_alarm_frac=0.9):
 
-    header = ['Function', 'DBase name', '% ident', '% cov', 'Sequence Warning', 'Min depth', 'Mean depth', 'Max depth',
+    header = ['Function', 'DBase name', 'sequence type', '% ident', '% cov', 'Sequence Warning', 'Min depth', 'Mean depth', 'Max depth',
               'Min qual', 'Mean qual', 'Max qual', 'SNP', 'SUB', 'Known prot SNP', 'Known DNA SNP', 'DBase start',
               'DBase end', 'DBase length', 'Query name', 'Query start', 'Query end', 'Query strand', 'Query length',
+              'Query length - DBase length',
               'Query DNA seq', 'Query prot seq', 'DBase dna seq', 'DBase prot seq']
     records = []
     for data in merged_results:
-        if 'warning' in data:
-            warning = data['warning']
-        else:
-            warning = 'No information'
-        values = [data['func'], data['tid'], data['pid'], data['pcv'], warning]
+        values = [data['func'], data['tid'], data["seqtype"], data['pid'], data['pcv']]
         if 'min_depth' in data:
-            values = values + [data['min_depth'], data['mean_depth'], data['max_depth']]
+            values += [data['min_depth'], data['mean_depth'], data['max_depth']]
         else:
-            values = values + ['-', '-', '-']
+            values += ['-', '-', '-']
         if 'min_qual' in data:
-            values = values + [data['min_qual'], data['mean_qual'], data['max_qual']]
+            values += [data['min_qual'], data['mean_qual'], data['max_qual']]
         else:
-            values = values + ['-', '-', '-']
+            values += ['-', '-', '-']
 
         mutations = []
         snps = []
@@ -477,9 +474,42 @@ def write_csv_html(merged_results, mut_prefix, id_prefix, database, pass_alarm_q
             known_dna_snp = data['known_dna_snp'].replace('|', ', ')
         else:
             known_dna_snp = ''
-        values = values + [snps, subs, known_prot_snp, known_dna_snp]
-        values = values + [data['tstart'], data['tend'], data['tlen']]
-        values = values + [data['qid'], data['qstart'], data['qend'], data['strand'], data['qend'] - data['qstart'] + 1]
+        values += [snps, subs, known_prot_snp, known_dna_snp]
+        values += [data['tstart'], data['tend'], data['tlen']]
+        data["qlen"] = data['qend'] - data['qstart'] + 1
+        values += [data['qid'], data['qstart'], data['qend'], data['strand'], data["qlen"]]
+
+        if data["seqtype"] == "dna":
+            r = int(data['tlen'])-int(data["qlen"])
+            values.append(r)
+            # if 10 AA are not present, probable truncation
+            if r *3 >= 10:
+                if 'warning' in data:
+                    if data['warning']:
+                        value = data['warning']
+                        value += ";; TRUNCATION WARNING"
+                    else:
+                        data['warning'] = "TRUNCATION WARNING"
+                else:
+                    data['warning'] = "TRUNCATION WARNING"
+        elif data["seqtype"] == "cds":
+            r = int(data['tlen'])*3-int(data["qlen"])
+            values.append(r)
+            if r *3 >= 10:
+                if 'warning' in data:
+                    if data['warning']:
+                        value = data['warning']
+                        value += ";; TRUNCATION WARNING"
+                    else:
+                        data['warning'] = "TRUNCATION WARNING"
+                else:
+                    data['warning'] = "TRUNCATION WARNING"
+
+
+        if 'warning' in data:
+            values.append(data['warning'])
+        else:
+            values.append('No information')
 
         if 'tprot' in data:
             t_prot_seq = str(data['tprot'])
@@ -499,7 +529,7 @@ def write_csv_html(merged_results, mut_prefix, id_prefix, database, pass_alarm_q
             t_dna_seq = str(data['tseq'])
         else:
             t_dna_seq = ''
-        values = values + [q_dna_seq, q_prot_seq, t_dna_seq, t_prot_seq]
+        values += [q_dna_seq, q_prot_seq, t_dna_seq, t_prot_seq]
         d = dict(zip(header, values))
         records.append(d)
     df = pd.DataFrame.from_dict(records)

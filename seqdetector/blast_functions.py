@@ -22,8 +22,7 @@ def run_blastn(blastn_db, query_file, pass_pid=70, force=True, evalue=0.0001, th
     if not force and os.path.exists(out_file):
         print(f'\nResult file {out_file} already exists')
     else:
-        fmt = '\"6 qseqid frames sallseqid slen qstart qend sstart send length pident nident ppos positive mismatch ' \
-              'gapopen gaps qseq sseq\"'
+        fmt = '\"6 qseqid frames sallseqid slen qstart qend sstart send length pident nident ppos positive mismatch gapopen gaps qseq sseq\"'
         cmd = f'$(which blastn) -out {out_file} -outfmt {fmt} -query {query_file} -db {blastn_db} -num_threads' \
               f' {threads} -perc_identity {pass_pid} -evalue {evalue}'
         process = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT).stdout.read()
