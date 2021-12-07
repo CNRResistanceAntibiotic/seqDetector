@@ -295,10 +295,10 @@ def dna_data_to_dict(id, d, dna_data, item):
 def write_csv_html(merged_results, mut_prefix, id_prefix, database, pass_alarm_qual=20, pass_alarm_depth=30,
                    pass_alarm_frac=0.9):
 
-    header = ['Function', 'DBase name', 'sequence type', '% ident', '% cov', 'Sequence Warning', 'Min depth', 'Mean depth', 'Max depth',
+    header = ['Function', 'DBase name', 'sequence type', '% ident', '% cov', 'Min depth', 'Mean depth', 'Max depth',
               'Min qual', 'Mean qual', 'Max qual', 'SNP', 'SUB', 'Known prot SNP', 'Known DNA SNP', 'DBase start',
               'DBase end', 'DBase length', 'Query name', 'Query start', 'Query end', 'Query strand', 'Query length',
-              'Query length - DBase length',
+              'Query length - DBase length', 'Sequence Warning',
               'Query DNA seq', 'Query prot seq', 'DBase dna seq', 'DBase prot seq']
     records = []
     for data in merged_results:
@@ -505,11 +505,10 @@ def write_csv_html(merged_results, mut_prefix, id_prefix, database, pass_alarm_q
                 else:
                     data['warning'] = "TRUNCATION WARNING"
 
+        if 'warning' not in data:
+            data['warning'] = 'No information'
 
-        if 'warning' in data:
-            values.append(data['warning'])
-        else:
-            values.append('No information')
+        values += [data['warning']]
 
         if 'tprot' in data:
             t_prot_seq = str(data['tprot'])
