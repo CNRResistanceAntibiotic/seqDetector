@@ -480,31 +480,35 @@ def write_csv_html(merged_results, mut_prefix, id_prefix, database, pass_alarm_q
         values += [data['qid'], data['qstart'], data['qend'], data['strand'], data["qlen"]]
 
         if data["seqtype"] == "dna":
+            # ratio in Acide nuclei
             r = int(data['tlen'])-int(data["qlen"])
             values.append(r)
-            # if 10 AA are not present, probable truncation
-            if r *3 >= 10:
+            # if 10 AA are not present or insert and pid >=40, probable truncation
+            if abs(r * 3) >= 10 and data['pid'] >= 40:
                 if 'warning' in data:
                     if data['warning']:
                         value = data['warning']
                         value += ";; TRUNCATION WARNING"
+                        data['warning'] = value
                     else:
                         data['warning'] = "TRUNCATION WARNING"
                 else:
                     data['warning'] = "TRUNCATION WARNING"
         elif data["seqtype"] == "cds":
-            r = int(data['tlen'])*3-int(data["qlen"])
+            # ratio in Acide nuclei
+            r = int(data['tlen']) * 3 - int(data["qlen"])
             values.append(r)
-            if r *3 >= 10:
+            # if 10 AA are not present or insert and pid >=40, probable truncation
+            if abs(r * 3) >= 10 and data['pid'] >= 40:
                 if 'warning' in data:
                     if data['warning']:
                         value = data['warning']
                         value += ";; TRUNCATION WARNING"
+                        data['warning'] = value
                     else:
                         data['warning'] = "TRUNCATION WARNING"
                 else:
                     data['warning'] = "TRUNCATION WARNING"
-
         if 'warning' not in data:
             data['warning'] = 'No information'
 
