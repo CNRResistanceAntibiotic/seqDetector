@@ -9,6 +9,7 @@ import shutil
 import subprocess
 import sys
 from collections import OrderedDict
+from time import sleep
 
 import pandas as pd
 from Bio import SeqIO
@@ -891,6 +892,7 @@ def main(args):
                     os.remove(out_diamond_file)
                 if os.path.exists(out_blastn_file):
                     os.remove(out_blastn_file)
+                sleep(4)
                 shutil.rmtree(out_dir)
                 shutil.rmtree(mut_dir)
         else:

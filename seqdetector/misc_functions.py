@@ -2,9 +2,11 @@
 import csv
 import os
 import re
+import shutil
 import subprocess
 from collections import OrderedDict
 from shutil import rmtree
+from time import sleep
 
 from Bio import SeqIO
 from Bio.Seq import Seq
@@ -97,10 +99,10 @@ def cds_global_alignment(dmnd_results, query_dic, wk_dir, pass_pid, pass_pcv):
             if m - 3 >= 0:
                 data['qstart'] = m - 2
             data['qseq'] = str(q_seq[data['qstart'] - 1:data['qend']].seq)
+        # check strand
         if data['strand'] > 0:
             if str(data['qseq'][0:3]) not in ['ATG', 'GTG', 'TTG', 'ATT', 'CTG'] or data['tstart'] > 1:
-                pos = []
-                scores = []
+                pos, scores = [], []
                 m = data['qstart'] + 17
                 while m - 3 >= 0:
                     m = m - 3
@@ -273,7 +275,8 @@ def extract_substitutions(data, wk_dir):
 
     tmp_clustalo_path = os.path.join(wk_dir, "tmp_clustalo")
 
-    os.makedirs(tmp_clustalo_path)
+    if not os.path.exists(tmp_clustalo_path):
+        os.makedirs(tmp_clustalo_path)
 
     in_file = os.path.join(tmp_clustalo_path, 'tmp.fasta')
     out_file = os.path.join(tmp_clustalo_path, 'tmp.clu')
@@ -281,17 +284,15 @@ def extract_substitutions(data, wk_dir):
         SeqIO.write(records, in_f, 'fasta')
     cmd = f"$(which clustalo) -i {in_file} -o {out_file} --outfmt=fa --force"
 
-    process = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT).stdout.read()
-    #print("\n{0}\n{1}\n".format(cmd, process.decode("utf-8")))
+    subprocess.call(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+
+    # print("\n{0}\n{1}\n".format(cmd, process.stdout.read().decode("utf-8")))
 
     # parse alignment
     records = []
     with open(out_file) as inf_f:
         for rec in SeqIO.parse(inf_f, 'fasta'):
             records.append(rec)
-
-    # remove clustalo work dir
-    rmtree(tmp_clustalo_path)
 
     q_seq = records[0]
     t_seq = records[1]
@@ -313,14 +314,23 @@ def extract_substitutions(data, wk_dir):
         pcv = 100.0
     # extract mutations from alignment
     unclassified_subs = []
+    print("lol")
+    print(known_snps)
+
     known_snps = known_snps.split(',')
     known_pos = []
-    for x in known_snps:
-        if "stop" not in x.lower() and "del" not in x.lower() and x:
+    # get known SNP position
+    print(known_snps)
+    if known_snps != ['']:
+        for x in known_snps:
+            print(x)
             m = re.search(r'([A-Z]+)([0-9]+)([A-Z]+)', x)
+            print(int(m.group(2)))
             known_pos.append(int(m.group(2)))
+
     known_pos = list(set(known_pos))
     indel = 0
+    stop = 0
     for i in dif_indexes:
         t_prot_pos = i + 1 - t_seq.seq[0:i].count('-')
         q_prot_pos = i + 1 - q_seq.seq[0:i].count('-')
@@ -331,8 +341,11 @@ def extract_substitutions(data, wk_dir):
             t_aa = 'i'
             indel = 1
         if q_aa == '-':
-            q_aa = 'd'
+            q_aa = 'del'
             indel = 1
+        if q_aa == '*':
+            q_aa = 'stop'
+            stop = 1
         unclassified_subs.append(
             {'t_prot_pos': t_prot_pos, 'q_prot_pos': q_prot_pos, 'a_prot_pos': a_prot_pos, 't_aa': t_aa, 'q_aa': q_aa})
     # format indels
@@ -344,11 +357,11 @@ def extract_substitutions(data, wk_dir):
             pos = d['a_prot_pos']
             query = d['q_aa']
 
-            if query == 'd' and pre_query == 'd' and pos == pre_pos + 1:
+            if query == 'del' and pre_query == 'del' and pos == pre_pos + 1:
                 unclassified_subs[open_deletion_index]['t_aa'] = unclassified_subs[open_deletion_index]['t_aa'] + \
                                                                  unclassified_subs[n]['t_aa']
                 index_dels.append(n)
-            elif query == 'd':
+            elif query == 'del':
                 open_deletion_index = n
 
             if target == 'i' and pre_target == 'i' and pos == pre_pos + 1:
@@ -368,6 +381,8 @@ def extract_substitutions(data, wk_dir):
 
     # classify the mutation as known (snps) or unknown (subs)
     subs, snps = [], []
+    print(known_snps)
+    print(unclassified_subs)
     if known_snps != ['']:
         for m in unclassified_subs:
             if m['t_prot_pos'] in known_pos:
@@ -393,6 +408,7 @@ def extract_substitutions(data, wk_dir):
     data['tprot'] = t_seq.seq
     data['prot_sub'] = subs
     data['prot_snp'] = snps
+
     return data
 
 
