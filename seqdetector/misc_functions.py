@@ -233,16 +233,27 @@ def extract_substitutions(data, wk_dir):
     t_seq = data['fulltseq']
     strand = data['strand']
     known_snps = data['known_prot_snp']
+    stop_codon_alt = ""
     if strand > 0:
         try:
             q_seq = Seq(q_seq).translate(table='Bacterial', cds=True)
         except Exception as e:
+            if "is not a stop codon" in str(e):
+                print("Found a Amine Acide at a STOP codon !")
+                stop_codon_alt = str(e).split("Final codon '")[1].split("' is not a stop codon")[0]
+                stop_codon_alt = Seq(stop_codon_alt).translate(table='Bacterial')
             print(e)
+            print()
             if len([x for x in list(set(q_seq)) if x.upper() not in ['A', 'T', 'C', 'G']]) > 0:
                 try:
                     q_seq = Seq(q_seq).translate(table='Bacterial', cds=True)
                 except Exception as e:
+                    if "is not a stop codon" in str(e):
+                        print("Found a Amine Acide at a STOP codon !")
+                        stop_codon_alt = str(e).split("Final codon '")[1].split("' is not a stop codon")[0]
+                        stop_codon_alt = Seq(stop_codon_alt).translate(table='Bacterial')
                     print(e)
+                    print()
                     q_seq = Seq(q_seq).translate(table='Bacterial', cds=False)
             else:
                 q_seq = Seq(q_seq).translate(table='Bacterial', cds=False)
@@ -250,12 +261,22 @@ def extract_substitutions(data, wk_dir):
         try:
             q_seq = Seq(q_seq).reverse_complement().translate(table='Bacterial', cds=True)
         except Exception as e:
+            if "is not a stop codon" in str(e):
+                print("Found a Amine Acide at a STOP codon !")
+                stop_codon_alt = str(e).split("Final codon '")[1].split("' is not a stop codon")[0]
+                stop_codon_alt = Seq(stop_codon_alt).translate(table='Bacterial')
             print(e)
+            print()
             if len([x for x in list(set(q_seq)) if x.upper() not in ['A', 'T', 'C', 'G']]) > 0:
                 try:
                     q_seq = Seq(q_seq).reverse_complement().translate(table='Bacterial', cds=True)
                 except Exception as e:
+                    if "is not a stop codon" in str(e):
+                        print("Found a Amine Acide at a STOP codon !")
+                        stop_codon_alt = str(e).split("Final codon '")[1].split("' is not a stop codon")[0]
+                        stop_codon_alt = Seq(stop_codon_alt).translate(table='Bacterial')
                     print(e)
+                    print()
                     q_seq = Seq(q_seq).reverse_complement().translate(table='Bacterial', cds=False)
             else:
                 q_seq = Seq(q_seq).reverse_complement().translate(table='Bacterial', cds=False)
@@ -314,18 +335,13 @@ def extract_substitutions(data, wk_dir):
         pcv = 100.0
     # extract mutations from alignment
     unclassified_subs = []
-    print("lol")
-    print(known_snps)
 
     known_snps = known_snps.split(',')
     known_pos = []
     # get known SNP position
-    print(known_snps)
     if known_snps != ['']:
         for x in known_snps:
-            print(x)
             m = re.search(r'([A-Z]+)([0-9]+)([A-Z]+)', x)
-            print(int(m.group(2)))
             known_pos.append(int(m.group(2)))
 
     known_pos = list(set(known_pos))
@@ -346,8 +362,10 @@ def extract_substitutions(data, wk_dir):
         if q_aa == '*':
             q_aa = 'stop'
             stop = 1
+
         unclassified_subs.append(
             {'t_prot_pos': t_prot_pos, 'q_prot_pos': q_prot_pos, 'a_prot_pos': a_prot_pos, 't_aa': t_aa, 'q_aa': q_aa})
+
     # format indels
     if indel == 1:
         pre_pos, pre_query, pre_target = 0, '', ''
@@ -379,10 +397,18 @@ def extract_substitutions(data, wk_dir):
         for i in index_dels:
             del unclassified_subs[i]
 
+    # case of uncounter stop codon
+    if stop_codon_alt:
+        t_prot_pos = len(t_seq.seq)+1
+        q_prot_pos = len(q_seq.seq)+1
+        a_prot_pos = len(q_seq.seq)+1
+        t_aa = 'STOP'
+        q_aa = stop_codon_alt
+        unclassified_subs.append(
+            {'t_prot_pos': t_prot_pos, 'q_prot_pos': q_prot_pos, 'a_prot_pos': a_prot_pos, 't_aa': t_aa, 'q_aa': q_aa})
+
     # classify the mutation as known (snps) or unknown (subs)
     subs, snps = [], []
-    print(known_snps)
-    print(unclassified_subs)
     if known_snps != ['']:
         for m in unclassified_subs:
             if m['t_prot_pos'] in known_pos:
