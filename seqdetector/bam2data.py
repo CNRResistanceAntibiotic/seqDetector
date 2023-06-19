@@ -44,6 +44,7 @@ def bam_count(bam_file, fasta_ref, output_dir, q=0, b=0, feature_name='', site_f
     if not os.path.exists(out_file) or force:
         process = Popen(cmd, shell=True, stdout=PIPE, stderr=STDOUT).stdout.read()
         log_info = f"Command line executed: {cmd}\n\n\n{process.decode('utf-8')}"
+        print(log_info)
     else:
         print(f'\nRead count file {out_file} already done.\n')
     return out_file
