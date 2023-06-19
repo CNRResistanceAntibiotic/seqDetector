@@ -17,7 +17,7 @@ def write_site_file(position, output_dir):
         site_file = os.path.join(os.path.dirname(output_dir), 'site_file.txt')
         for item in match.groups():
             if item != '':
-                txt = txt + '\t{0}'.format(item)
+                txt = txt + f'\t{item}'
         with open(site_file, 'w') as out_f:
             out_f.write(txt[1:])
         return site_file
@@ -33,22 +33,19 @@ def write_site_file(position, output_dir):
 def bam_count(bam_file, fasta_ref, output_dir, q=0, b=0, feature_name='', site_file='', force=False):
     sample = os.path.basename(bam_file).split(".")[0]
     if feature_name == '' and site_file == '':
-        out_file = os.path.join(output_dir, '{0}_{1}_raw.csv'.format(sample, 'whole_genome'))
-        cmd = '$(which bam-readcount) -w 0 -q {0} -b {1} -i -f {2} {3} > {4}'.format(q, b, fasta_ref, bam_file,
-                                                                                     out_file)
+        out_file = os.path.join(output_dir, f'{sample}_whole_genome_raw.csv')
+        cmd = f'$(which bam-readcount) -w 0 -q {q} -b {b} -i -f {fasta_ref} {bam_file} > {out_file}'
     elif feature_name != '' and site_file == '':
-        out_file = os.path.join(output_dir, '{0}_{1}_raw.csv'.format(sample, feature_name))
-        cmd = '$(which bam-readcount) -w 0 -q {0} -b {1} -i -f {2} {3} > {4}'.format(q, b, fasta_ref, bam_file,
-                                                                                     out_file)
+        out_file = os.path.join(output_dir, f'{sample}_{feature_name}_raw.csv')
+        cmd = f'$(which bam-readcount) -w 0 -q {q} -b {b} -i -f {fasta_ref} {bam_file} > {out_file}'
     else:
-        out_file = os.path.join(output_dir, '{0}_{1}_raw.csv'.format(sample, feature_name))
-        cmd = '$(which bam-readcount) -w 0 -q {0} -b {1} -i -l {2} -f {3} {4} > {5}'.format(q, b, site_file, fasta_ref,
-                                                                                      bam_file, out_file)
+        out_file = os.path.join(output_dir, f'{sample}_{feature_name}_raw.csv')
+        cmd = f'$(which bam-readcount) -w 0 -q {q} -b {b} -i -l {site_file} -f {fasta_ref} {bam_file} > {out_file}'
     if not os.path.exists(out_file) or force:
         process = Popen(cmd, shell=True, stdout=PIPE, stderr=STDOUT).stdout.read()
-        log_info = "Command line executed: {0}\n\n\n{1}".format(cmd, process.decode("utf-8"))
+        log_info = f"Command line executed: {cmd}\n\n\n{process.decode('utf-8')}"
     else:
-        print('\nRead count file {0} already done.\n'.format(out_file))
+        print(f'\nRead count file {out_file} already done.\n')
     return out_file
 
 
@@ -71,9 +68,9 @@ def bam_count_stats(bam_count_file, feature_name, header, output_dir, bam_file):
     sample = os.path.basename(bam_file).split(".")[0]
 
     if feature_name == '':
-        out_file = os.path.join(output_dir, '{0}_{1}_stats'.format(sample, 'whole_genome'))
+        out_file = os.path.join(output_dir, f'{sample}_whole_genome_stats')
     else:
-        out_file = os.path.join(output_dir, '{0}_{1}_stats'.format(sample, feature_name))
+        out_file = os.path.join(output_dir, f'{sample}_{feature_name}_stats')
     with open(bam_count_file) as count_f:
         ctgs = []
         result_stat = []
@@ -94,9 +91,9 @@ def bam_count_stats(bam_count_file, feature_name, header, output_dir, bam_file):
                     # for key, value in calculate_stats(ctg_depth).iteritems():
                     #    s.append(('All_depth_{0}'.format(key), value))
                     for key, value in calculate_stats(ctg_ref_depth).items():
-                        s.append(('Ref_depth_{0}'.format(key), value))
+                        s.append((f'Ref_depth_{key}', value))
                     for key, value in calculate_stats(ctg_ref_qual).items():
-                        s.append(('Ref_quali_{0}'.format(key), value))
+                        s.append((f'Ref_quali_{key}', value))
                     s = OrderedDict(s)
                     result_stat.append(s)
                 ctg_ref_depth, ctg_ref_qual = [], []
@@ -123,15 +120,20 @@ def bam_count_stats(bam_count_file, feature_name, header, output_dir, bam_file):
                     ctg_ref_depth.append(int(data['count']))
                     ctg_ref_qual.append(round(float(data['avg_base_quality']), 2))
 
+        print(start)
+        print(end)
+        print(base_nb)
+        print(ctgs)
+
         d = OrderedDict([('ID', ctgs[-1]), ('start', start), ('end', end), ('size', base_nb)])
         result_data.append(d)
         s = []
         # for key, value in calculate_stats(ctg_depth).iteritems():
         #    s.append(('All_depth_{0}'.format(key), value))
         for key, value in calculate_stats(ctg_ref_depth).items():
-            s.append(('Ref_depth_{0}'.format(key), value))
+            s.append((f'Ref_depth_{key}', value))
         for key, value in calculate_stats(ctg_ref_qual).items():
-            s.append(('Ref_quali_{0}'.format(key), value))
+            s.append((f'Ref_quali_{key}', value))
         s = OrderedDict(s)
         result_stat.append(s)
 
@@ -144,18 +146,18 @@ def bam_count_stats(bam_count_file, feature_name, header, output_dir, bam_file):
                                  ignore_index=True)
         df = pd.concat([df_data, df_stat], axis=1)
         df.sort_values('size', inplace=True)
-        df.to_csv('{0}.csv'.format(out_file), sep='\t', header=True, index=True)
-        df.to_html('{0}.html'.format(out_file), index=True)
-        return '{0}.csv'.format(out_file)
+        df.to_csv(f'{out_file}.csv', sep='\t', header=True, index=True)
+        df.to_html(f'{out_file}.html', index=True)
+        return f'{out_file}.csv'
 
 
 def bam_count_extract(bam_count_file, feature_name, header, output_dir, bam_file):
 
     sample = os.path.basename(bam_file).split(".")[0]
     if feature_name == '':
-        out_file = os.path.join(output_dir, sample + '_{0}_count'.format('whole_genome'))
+        out_file = os.path.join(output_dir, sample + f'_{"whole_genome"}_count')
     else:
-        out_file = os.path.join(output_dir, sample + '_{0}_count'.format(feature_name))
+        out_file = os.path.join(output_dir, sample + f'_{feature_name}_count')
 
     with open(bam_count_file) as count_f:
         result_data = []
@@ -170,16 +172,16 @@ def bam_count_extract(bam_count_file, feature_name, header, output_dir, bam_file
                 d = dict(zip(header.split(':'), item.split(':')))
                 base = d['base']
                 if base != '=':
-                    data.append(('{0}_depth'.format(base), int(d['count'])))
-                    data.append(('{0}_quality'.format(base), round(float(d['avg_base_quality']), 2)))
+                    data.append((f'{base}_depth', int(d['count'])))
+                    data.append((f'{base}_quality', round(float(d['avg_base_quality']), 2)))
             data = OrderedDict(data)
             result_data.append(data)
 
         df = pd.DataFrame.from_dict(result_data)
         # print(df)
-        df.to_csv('{0}.csv'.format(out_file), sep='\t', header=True, index=True)
-        df.to_html('{0}.html'.format(out_file), index=True)
-    return '{0}.csv'.format(out_file)
+        df.to_csv(f'{out_file}.csv', sep='\t', header=True, index=True)
+        df.to_html(f'{out_file}.html', index=True)
+    return f'{out_file}.csv'
 
 
 def pre_main(args):

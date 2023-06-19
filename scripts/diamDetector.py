@@ -31,7 +31,7 @@ def run_diam(dmnd_db, query_file, pass_pid=70, pass_pcv=70, threads=8, force=Tru
         fmt = '6 qseqid qframe sseqid slen qstart qend sstart send length pident nident ppos positive mismatch ' \
               'gapopen gaps qseq sseq full_sseq'
         cmd = f"$(which diamond) blastx --more-sensitive -k 0 -p {threads} -d {dmnd_db} -q {query_file}" \
-              f" --id {pass_pid} --subject-cover {pass_pcv} -f {fmt} -o {out_file} --masking no"
+              f" --id {pass_pid} --subject-cover {pass_pcv} -f {fmt} -o {out_file} --masking none"
         process = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT).stdout.read()
         print(f"\n{cmd}\n{process.decode('utf-8')}")
     return out_file
@@ -829,9 +829,8 @@ def main(args):
             print(f'\nNumber of detected features nucleotidic before lax taxonomic and overlap filtering: {len(blastn_results)}')
             blastn_results = overlap_filter(blastn_results, taxonomy, pass_overlap)
             print(f'\nNumber of detected features nucleotidic after lax taxonomic and overlap filtering: {len(blastn_results)}')
-            print(
-                f'\n######## Number of detected features after lax taxonomic and overlap filtering:'
-                f' {len(dmnd_results) + len(blastn_results)} ########')
+            print(f'\n######## Number of detected features after lax taxonomic and overlap filtering:'
+                  f' {len(dmnd_results) + len(blastn_results)} ########')
         else:
             dmnd_results = overlap_filter(dmnd_results, '', pass_overlap)
             blastn_results = overlap_filter(blastn_results, '', pass_overlap)

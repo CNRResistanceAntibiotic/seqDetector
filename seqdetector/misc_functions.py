@@ -57,7 +57,6 @@ def evaluate_dna_alg(seq, ref_seq):
 
     pcv = round(100 * (len(seq.replace('-', ''))) / float(len(ref_seq.replace('-', ''))), 2)
 
-
     return {'nid': nid, 'pid': pid, 'pcv': pcv, 'pos': nid, 'ppos': pid, 'gap': gap, 'opengap': open_gap, 'alen': a_len}
 
 
@@ -83,6 +82,7 @@ def make_dmnd_database(fasta_file, force=False, threads=8):
 
 def cds_global_alignment(dmnd_results, query_dic, wk_dir, pass_pid, pass_pcv):
     for data in dmnd_results:
+        # contig sequence
         q_seq = query_dic[data['qid']]
         # print '\n', data['tid'], data['strand'], data['tlen'], data['tstart'], data['tend']
         if data['strand'] > 0:
@@ -101,6 +101,7 @@ def cds_global_alignment(dmnd_results, query_dic, wk_dir, pass_pid, pass_pcv):
             data['qseq'] = str(q_seq[data['qstart'] - 1:data['qend']].seq)
         # check strand
         if data['strand'] > 0:
+            # check start
             if str(data['qseq'][0:3]) not in ['ATG', 'GTG', 'TTG', 'ATT', 'CTG'] or data['tstart'] > 1:
                 pos, scores = [], []
                 m = data['qstart'] + 17
@@ -129,6 +130,7 @@ def cds_global_alignment(dmnd_results, query_dic, wk_dir, pass_pid, pass_pcv):
                     data['qseq'] = str(q_seq[data['qstart'] - 1:data['qend']].seq)
                     # print data['qseq']
         else:
+            # check start
             if str(data['qseq'][-3:]) not in ['CAT', 'CAC', 'CAA'] or data['tstart'] > 1:
                 pos = []
                 scores = []
@@ -155,9 +157,9 @@ def cds_global_alignment(dmnd_results, query_dic, wk_dir, pass_pid, pass_pcv):
                     m = pos[scores.index(min(scores))]
                     data['qend'] = m
                     # print data['qseq']
+
                     data['qseq'] = str(q_seq[data['qstart'] - 1:data['qend']].seq)
                     # print data['qseq']
-
         data = extract_substitutions(data, wk_dir)
 
     # remove entry by their new pid and pcov
@@ -234,52 +236,48 @@ def extract_substitutions(data, wk_dir):
     strand = data['strand']
     known_snps = data['known_prot_snp']
     stop_codon_alt = ""
-    if strand > 0:
-        try:
-            q_seq = Seq(q_seq).translate(table='Bacterial', cds=True)
-        except Exception as e:
-            if "is not a stop codon" in str(e):
-                print("Found a Amine Acide at a STOP codon !")
-                stop_codon_alt = str(e).split("Final codon '")[1].split("' is not a stop codon")[0]
-                stop_codon_alt = Seq(stop_codon_alt).translate(table='Bacterial')
-            print(e)
-            print()
-            if len([x for x in list(set(q_seq)) if x.upper() not in ['A', 'T', 'C', 'G']]) > 0:
-                try:
-                    q_seq = Seq(q_seq).translate(table='Bacterial', cds=True)
-                except Exception as e:
-                    if "is not a stop codon" in str(e):
-                        print("Found a Amine Acide at a STOP codon !")
-                        stop_codon_alt = str(e).split("Final codon '")[1].split("' is not a stop codon")[0]
-                        stop_codon_alt = Seq(stop_codon_alt).translate(table='Bacterial')
-                    print(e)
-                    print()
-                    q_seq = Seq(q_seq).translate(table='Bacterial', cds=False)
+    q_seq_tmp = ""
+    try:
+        if strand > 0:
+            q_seq_tmp = Seq(q_seq).translate(table='Bacterial', cds=True)
+        else:
+            q_seq_tmp = Seq(q_seq).reverse_complement().translate(table='Bacterial', cds=True)
+    except Exception as e:
+        if not q_seq_tmp:
+            q_seq_tmp = q_seq
+        print("error")
+        print(e)
+        if "is not a stop codon" in str(e):
+            print("Found a Amine Acide at a STOP codon !")
+            stop_codon_alt = str(e).split("Final codon '")[1].split("' is not a stop codon")[0]
+            stop_codon_alt = Seq(stop_codon_alt).translate(table='Bacterial')
+        elif "not a multiple of three" in str(e):
+            # 0.5 if for down round integer 5.6 -> 5
+            corrected_len = round((len(q_seq)/3)-0.5)*3
+            q_seq_tmp = q_seq[0:corrected_len]
+        print()
+        # check not nucleic acid character
+        if len([x for x in list(set(q_seq_tmp)) if x.upper() not in ['A', 'T', 'C', 'G']]) > 0:
+            try:
+                q_seq_tmp = Seq(q_seq_tmp).translate(table='Bacterial', cds=True)
+            except Exception as e:
+                if "is not a stop codon" in str(e):
+                    print("Found a Amine Acide at a STOP codon !")
+                    stop_codon_alt = str(e).split("Final codon '")[1].split("' is not a stop codon")[0]
+                    stop_codon_alt = Seq(stop_codon_alt).translate(table='Bacterial')
+                print(e)
+                print()
+                if strand >0 :
+                    q_seq_tmp = Seq(q_seq_tmp).translate(table='Bacterial', cds=False)
+                else:
+                    q_seq_tmp = Seq(q_seq_tmp).reverse_complement().translate(table='Bacterial', cds=False)
+        else:
+            if strand > 0:
+                q_seq_tmp = Seq(q_seq_tmp).translate(table='Bacterial', cds=False)
             else:
-                q_seq = Seq(q_seq).translate(table='Bacterial', cds=False)
-    else:
-        try:
-            q_seq = Seq(q_seq).reverse_complement().translate(table='Bacterial', cds=True)
-        except Exception as e:
-            if "is not a stop codon" in str(e):
-                print("Found a Amine Acide at a STOP codon !")
-                stop_codon_alt = str(e).split("Final codon '")[1].split("' is not a stop codon")[0]
-                stop_codon_alt = Seq(stop_codon_alt).translate(table='Bacterial')
-            print(e)
-            print()
-            if len([x for x in list(set(q_seq)) if x.upper() not in ['A', 'T', 'C', 'G']]) > 0:
-                try:
-                    q_seq = Seq(q_seq).reverse_complement().translate(table='Bacterial', cds=True)
-                except Exception as e:
-                    if "is not a stop codon" in str(e):
-                        print("Found a Amine Acide at a STOP codon !")
-                        stop_codon_alt = str(e).split("Final codon '")[1].split("' is not a stop codon")[0]
-                        stop_codon_alt = Seq(stop_codon_alt).translate(table='Bacterial')
-                    print(e)
-                    print()
-                    q_seq = Seq(q_seq).reverse_complement().translate(table='Bacterial', cds=False)
-            else:
-                q_seq = Seq(q_seq).reverse_complement().translate(table='Bacterial', cds=False)
+                q_seq_tmp = Seq(q_seq_tmp).reverse_complement().translate(table='Bacterial', cds=False)
+
+    q_seq=q_seq_tmp
 
     # Convert target sequence as Seq object
     try:
