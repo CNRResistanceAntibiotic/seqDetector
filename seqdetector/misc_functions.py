@@ -246,6 +246,7 @@ def extract_substitutions(data, wk_dir):
         if not q_seq_tmp:
             q_seq_tmp = q_seq
         print("error")
+        print(data)
         print(e)
         if "is not a stop codon" in str(e):
             print("Found a Amine Acide at a STOP codon !")

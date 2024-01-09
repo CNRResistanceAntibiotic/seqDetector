@@ -121,10 +121,10 @@ def bam_count_stats(bam_count_file, feature_name, header, output_dir, bam_file):
                     ctg_ref_depth.append(int(data['count']))
                     ctg_ref_qual.append(round(float(data['avg_base_quality']), 2))
 
-        print(start)
-        print(end)
-        print(base_nb)
-        print(ctgs)
+        # print(start)
+        # print(end)
+        # print(base_nb)
+        # print(ctgs)
 
         d = OrderedDict([('ID', ctgs[-1]), ('start', start), ('end', end), ('size', base_nb)])
         result_data.append(d)
