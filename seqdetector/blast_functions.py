@@ -19,12 +19,13 @@ def make_blastn_database(fasta_file, force=False, threads=8):
 
 
 def run_blastn(blastn_db, query_file, pass_pid=70, force=True, evalue=0.0001, threads=8, out_file=""):
+    max_target_seqs = 40000
     if not force and os.path.exists(out_file):
         print(f'\nResult file {out_file} already exists')
     else:
         fmt = '\"6 qseqid frames sallseqid slen qstart qend sstart send length pident nident ppos positive mismatch gapopen gaps qseq sseq\"'
         cmd = f'$(which blastn) -out {out_file} -outfmt {fmt} -query {query_file} -db {blastn_db} -num_threads' \
-              f' {threads} -perc_identity {pass_pid} -evalue {evalue}'
+              f' {threads} -perc_identity {pass_pid} -evalue {evalue} -max_target_seqs {max_target_seqs}'
         process = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT).stdout.read()
         print(f"\n{cmd}\n{process.decode('utf-8')}")
     return out_file

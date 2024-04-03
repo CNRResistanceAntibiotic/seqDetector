@@ -574,9 +574,7 @@ def main(args):
                 print(cmd)
                 os.system(cmd)
 
-            # Make blastn database, launch blastn and load the results
-            blastn_results = []
-
+            # Make blastn database, launch blast
             out_blastn_file = os.path.join(os.path.dirname(query_file), f'blastn_output_{schema}_{sample_name}.csv')
 
             if os.path.exists(dna_target_file):
