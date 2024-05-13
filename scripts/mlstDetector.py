@@ -570,7 +570,7 @@ def main(args):
             if not os.path.exists(dna_target_file):
                 print(f"\nNo fasta file for {taxonomy}\n")
                 cmd = f'cat {mlst_dir}/*.tfa > {wk_dir}/profile_{schema}.fasta'
-                print("Fasta file created ! ")
+                print("Fasta file created !")
                 print(cmd)
                 os.system(cmd)
 

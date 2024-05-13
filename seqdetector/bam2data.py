@@ -125,31 +125,33 @@ def bam_count_stats(bam_count_file, feature_name, header, output_dir, bam_file):
         # print(end)
         # print(base_nb)
         # print(ctgs)
+        if ctgs:
+            d = OrderedDict([('ID', ctgs[-1]), ('start', start), ('end', end), ('size', base_nb)])
+            result_data.append(d)
+            s = []
+            # for key, value in calculate_stats(ctg_depth).iteritems():
+            #    s.append(('All_depth_{0}'.format(key), value))
+            for key, value in calculate_stats(ctg_ref_depth).items():
+                s.append((f'Ref_depth_{key}', value))
+            for key, value in calculate_stats(ctg_ref_qual).items():
+                s.append((f'Ref_quali_{key}', value))
+            s = OrderedDict(s)
+            result_stat.append(s)
 
-        d = OrderedDict([('ID', ctgs[-1]), ('start', start), ('end', end), ('size', base_nb)])
-        result_data.append(d)
-        s = []
-        # for key, value in calculate_stats(ctg_depth).iteritems():
-        #    s.append(('All_depth_{0}'.format(key), value))
-        for key, value in calculate_stats(ctg_ref_depth).items():
-            s.append((f'Ref_depth_{key}', value))
-        for key, value in calculate_stats(ctg_ref_qual).items():
-            s.append((f'Ref_quali_{key}', value))
-        s = OrderedDict(s)
-        result_stat.append(s)
-
-        df_data = pd.DataFrame.from_dict(result_data)
-        df_stat = pd.DataFrame.from_dict(result_stat)
-        weighted_mean = ((df_stat.multiply(df_data['size'], axis=0).sum()).div(df_data['size'].sum(), axis=0)).round(2)
-        df_stat = df_stat.append(weighted_mean, ignore_index=True)
-        df_stat = df_stat.round(2)
-        df_data = df_data.append([{'ID': 'Overall', 'size': df_data['size'].sum(), 'end': '-', 'start': '-'}],
-                                 ignore_index=True)
-        df = pd.concat([df_data, df_stat], axis=1)
-        df.sort_values('size', inplace=True)
-        df.to_csv(f'{out_file}.csv', sep='\t', header=True, index=True)
-        df.to_html(f'{out_file}.html', index=True)
-        return f'{out_file}.csv'
+            df_data = pd.DataFrame.from_dict(result_data)
+            df_stat = pd.DataFrame.from_dict(result_stat)
+            weighted_mean = ((df_stat.multiply(df_data['size'], axis=0).sum()).div(df_data['size'].sum(), axis=0)).round(2)
+            df_stat = df_stat.append(weighted_mean, ignore_index=True)
+            df_stat = df_stat.round(2)
+            df_data = df_data.append([{'ID': 'Overall', 'size': df_data['size'].sum(), 'end': '-', 'start': '-'}],
+                                     ignore_index=True)
+            df = pd.concat([df_data, df_stat], axis=1)
+            df.sort_values('size', inplace=True)
+            df.to_csv(f'{out_file}.csv', sep='\t', header=True, index=True)
+            df.to_html(f'{out_file}.html', index=True)
+            return f'{out_file}.csv'
+        else:
+            return ''
 
 
 def bam_count_extract(bam_count_file, feature_name, header, output_dir, bam_file):
@@ -227,7 +229,10 @@ def main(bam_file, fasta_ref, position, output_dir, feature_name, force=False, m
     out_file_list = [bam_count_file]
     if stats:
         stat_file = bam_count_stats(bam_count_file, feature_name, header, output_dir, bam_file)
-        out_file_list.append(stat_file)
+        if stat_file:
+            out_file_list.append(stat_file)
+        else:
+            print("\n Error ! No stats file produced \n")
     if data:
         data_file = bam_count_extract(bam_count_file, feature_name, header, output_dir, bam_file)
         out_file_list.append(data_file)
