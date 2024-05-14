@@ -110,57 +110,57 @@ def dna_extract_quality_and_depth(bam_file, fas_file, blastn_results, out_prefix
         if not (os.path.exists(data_outfile) and not os.path.exists(stat_outfile)) or force:
             bam2data.main(bam_file=bam_file, fasta_ref=fas_file, position=position, output_dir=out_dir,
                           feature_name=feature_name, force=True, mapping_qual=0, base_qual=0, stats=True, data=True)
+        if os.path.exists(stat_outfile):
+            result = read_bam_stat(stat_outfile)
+            data['mean_qual'] = round(float(result['Ref_quali_mean']), 1)
+            data['min_qual'] = int(float(result['Ref_quali_min']))
+            data['max_qual'] = int(float(result['Ref_quali_max']))
+            data['mean_depth'] = round(float(result['Ref_depth_mean']), 1)
+            data['min_depth'] = int(float(result['Ref_depth_min']))
+            data['max_depth'] = int(float(result['Ref_depth_max']))
+        if os.path.exists(data_outfile):
+            result, warning = read_bam_count(data_outfile)
+            data['warning'] = warning
+            for item in ['dna_snp', 'dna_sub']:
+                if data[item]:
+                    for snp in data[item]:
+                        dna_pos = snp['q_dna_pos']
+                        t_base = snp['t_base']
+                        q_base = snp['q_base']
 
-        result = read_bam_stat(stat_outfile)
-        data['mean_qual'] = round(float(result['Ref_quali_mean']), 1)
-        data['min_qual'] = int(float(result['Ref_quali_min']))
-        data['max_qual'] = int(float(result['Ref_quali_max']))
-        data['mean_depth'] = round(float(result['Ref_depth_mean']), 1)
-        data['min_depth'] = int(float(result['Ref_depth_min']))
-        data['max_depth'] = int(float(result['Ref_depth_max']))
+                        if strand > 0 and q_base != 'd':
+                            dna_pos = start + (dna_pos - 1)
+                            if str(dna_pos) in result[ctg]:
+                                d = result[ctg][str(dna_pos)]
+                                ref = d['reference'].upper()
+                                if ref in ['A', 'T', 'C', 'G']:
+                                    ref_depth = f'{d["{0}_depth".format(ref)]}/{d["total_depth"]}'
+                                    ref_qual = str(round(float(d[f'{ref}_quality']), 1))
+                                else:
+                                    continue
 
-        result, warning = read_bam_count(data_outfile)
-        data['warning'] = warning
-        for item in ['dna_snp', 'dna_sub']:
-            if data[item]:
-                for snp in data[item]:
-                    dna_pos = snp['q_dna_pos']
-                    t_base = snp['t_base']
-                    q_base = snp['q_base']
-
-                    if strand > 0 and q_base != 'd':
-                        dna_pos = start + (dna_pos - 1)
-                        if str(dna_pos) in result[ctg]:
-                            d = result[ctg][str(dna_pos)]
-                            ref = d['reference'].upper()
-                            if ref in ['A', 'T', 'C', 'G']:
-                                ref_depth = f'{d["{0}_depth".format(ref)]}/{d["total_depth"]}'
-                                ref_qual = str(round(float(d[f'{ref}_quality']), 1))
+                                txt = f'p:{dna_pos}; f:{strand}; b:{ref}; d:{ref_depth}; q:{ref_qual}'
                             else:
-                                continue
+                                txt = ''
 
-                            txt = f'p:{dna_pos}; f:{strand}; b:{ref}; d:{ref_depth}; q:{ref_qual}'
+                        elif strand < 0 and q_base != 'd':
+                            dna_pos = end - (dna_pos + 1)
+                            # depth known at "dna_pos" position
+                            if str(dna_pos) in result[ctg]:
+                                d = result[ctg][str(dna_pos)]
+                                ref = d['reference'].upper()
+                                if ref in ['A', 'T', 'C', 'G']:
+                                    ref_depth = f'{d["{}_depth".format(ref)]}/{d["total_depth"]}'
+                                    ref_qual = str(round(float(d['{}_quality'.format(ref)]), 1))
+                                else:
+                                    continue
+                                txt = f'p:{dna_pos}; f:{strand}; b:{ref}; d:{ref_depth}; q:{ref_qual}'
+                            # depth unknown at "dna_pos" position
+                            else:
+                                txt = ''
                         else:
                             txt = ''
-
-                    elif strand < 0 and q_base != 'd':
-                        dna_pos = end - (dna_pos + 1)
-                        # depth known at "dna_pos" position
-                        if str(dna_pos) in result[ctg]:
-                            d = result[ctg][str(dna_pos)]
-                            ref = d['reference'].upper()
-                            if ref in ['A', 'T', 'C', 'G']:
-                                ref_depth = f'{d["{}_depth".format(ref)]}/{d["total_depth"]}'
-                                ref_qual = str(round(float(d['{}_quality'.format(ref)]), 1))
-                            else:
-                                continue
-                            txt = f'p:{dna_pos}; f:{strand}; b:{ref}; d:{ref_depth}; q:{ref_qual}'
-                        # depth unknown at "dna_pos" position
-                        else:
-                            txt = ''
-                    else:
-                        txt = ''
-                    snp['dna_data'] = txt
+                        snp['dna_data'] = txt
 
     return blastn_results
 
