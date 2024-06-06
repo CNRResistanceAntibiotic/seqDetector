@@ -186,131 +186,134 @@ def cds_extract_quality_and_depth(bam_file, fas_file, dmnd_results, out_prefix, 
         bam2data.main(bam_file=bam_file, fasta_ref=fas_file, position=position, output_dir=out_dir,
                       feature_name=feature_name, force=True, mapping_qual=0, base_qual=0, stats=True, data=True)
 
+        #####
+
         stat_outfile = f'{os.path.join(out_dir, os.path.splitext(os.path.basename(bam_file))[0].split("_")[0])}' \
                        f'_{feature_name}_stats.csv'
+        if os.path.exists(stat_outfile):
+            result = read_bam_stat(stat_outfile)
+            data['mean_qual'] = round(float(result['Ref_quali_mean']), 1)
+            data['min_qual'] = int(float(result['Ref_quali_min']))
+            data['max_qual'] = int(float(result['Ref_quali_max']))
+            data['mean_depth'] = round(float(result['Ref_depth_mean']), 1)
+            data['min_depth'] = int(float(result['Ref_depth_min']))
+            data['max_depth'] = int(float(result['Ref_depth_max']))
 
-        result = read_bam_stat(stat_outfile)
-        data['mean_qual'] = round(float(result['Ref_quali_mean']), 1)
-        data['min_qual'] = int(float(result['Ref_quali_min']))
-        data['max_qual'] = int(float(result['Ref_quali_max']))
-        data['mean_depth'] = round(float(result['Ref_depth_mean']), 1)
-        data['min_depth'] = int(float(result['Ref_depth_min']))
-        data['max_depth'] = int(float(result['Ref_depth_max']))
+        ######
 
         data_outfile = f'{os.path.join(out_dir, os.path.splitext(os.path.basename(bam_file))[0].split("_")[0])}' \
                        f'_{feature_name}_count.csv'
-        # if os.path.exists(data_outfile) == False or force == True:
+        if os.path.exists(data_outfile):
+            result, warning = read_bam_count(data_outfile)
 
-        result, warning = read_bam_count(data_outfile)
+            data['warning'] = warning
+            for item in ['prot_snp', 'prot_sub']:
+                if data[item]:
+                    for snp in data[item]:
+                        prot_pos = snp['q_prot_pos']
+                        t_aa = snp['t_aa']
+                        q_aa = snp['q_aa']
 
-        data['warning'] = warning
-        for item in ['prot_snp', 'prot_sub']:
-            if data[item]:
-                for snp in data[item]:
-                    prot_pos = snp['q_prot_pos']
-                    t_aa = snp['t_aa']
-                    q_aa = snp['q_aa']
+                        if q_aa == 'd':
+                            size = len(t_aa.replace('[', '').replace(']', ''))
+                        else:
+                            size = len(q_aa.replace('[', '').replace(']', ''))
+                        if strand > 0 and q_aa != 'd':
+                            dna_pos = start + ((prot_pos - 1) * 3)
+                            dna_pos = range(dna_pos, dna_pos + (size * 3))
+                            bases, quals, depths = [], [], []
+                            base, qual, depth = 0, 0, 0
+                            for n, pos in enumerate(dna_pos):
+                                try:
+                                    d = result[ctg][str(pos)]
+                                    ref = d['reference'].upper()
+                                    if ref in ['A', 'T', 'C', 'G']:
+                                        ref_depth = f'{d["{0}_depth".format(ref)]}/{d["total_depth"]}'
+                                        ref_qual = str(round(float(d['{0}_quality'.format(ref)]), 1))
 
-                    if q_aa == 'd':
-                        size = len(t_aa.replace('[', '').replace(']', ''))
-                    else:
-                        size = len(q_aa.replace('[', '').replace(']', ''))
-                    if strand > 0 and q_aa != 'd':
-                        dna_pos = start + ((prot_pos - 1) * 3)
-                        dna_pos = range(dna_pos, dna_pos + (size * 3))
-                        bases, quals, depths = [], [], []
-                        base, qual, depth = 0, 0, 0
-                        for n, pos in enumerate(dna_pos):
-                            try:
-                                d = result[ctg][str(pos)]
-                                ref = d['reference'].upper()
-                                if ref in ['A', 'T', 'C', 'G']:
-                                    ref_depth = f'{d["{0}_depth".format(ref)]}/{d["total_depth"]}'
-                                    ref_qual = str(round(float(d['{0}_quality'.format(ref)]), 1))
+                                    else:
+                                        continue
 
-                                else:
-                                    continue
+                                except KeyError:
+                                    print(f'Position {pos} in {data["qid"]} for feature {data["tid"]} with reference depth'
+                                          f' of 0!')
+                                    ref = 'N'
+                                    ref_depth = '0/0'
+                                    ref_qual = '0'
 
-                            except KeyError:
-                                print(f'Position {pos} in {data["qid"]} for feature {data["tid"]} with reference depth'
-                                      f' of 0!')
-                                ref = 'N'
-                                ref_depth = '0/0'
-                                ref_qual = '0'
-
-                            if n % 3 == 0:
-                                if base != 0:
-                                    bases.append(base)
-                                    quals.append(qual)
-                                    depths.append(depth)
-                                base, qual, depth = f'p:{pos}; f:{strand}; b:{ref}', ref_qual, ref_depth
-                            else:
-                                if base == 0:
+                                if n % 3 == 0:
+                                    if base != 0:
+                                        bases.append(base)
+                                        quals.append(qual)
+                                        depths.append(depth)
                                     base, qual, depth = f'p:{pos}; f:{strand}; b:{ref}', ref_qual, ref_depth
                                 else:
-                                    base = base + ref
-                                    depth = depth + ',' + ref_depth
-                                    qual = qual + ',' + ref_qual
+                                    if base == 0:
+                                        base, qual, depth = f'p:{pos}; f:{strand}; b:{ref}', ref_qual, ref_depth
+                                    else:
+                                        base = base + ref
+                                        depth = depth + ',' + ref_depth
+                                        qual = qual + ',' + ref_qual
 
-                        if depth == 0:
-                            continue
+                            if depth == 0:
+                                continue
 
-                        bases.append(base)
-                        quals.append(qual)
-                        depths.append(depth)
-                        txt = ''
-                        for i in range(0, len(bases)):
-                            txt = txt + f'{bases[i]}; d:{depths[i]}; q:{quals[i]} | '
-                        txt = txt[:-3]
+                            bases.append(base)
+                            quals.append(qual)
+                            depths.append(depth)
+                            txt = ''
+                            for i in range(0, len(bases)):
+                                txt = txt + f'{bases[i]}; d:{depths[i]}; q:{quals[i]} | '
+                            txt = txt[:-3]
 
-                    elif strand < 0 and q_aa != 'd':
-                        dna_pos = end - ((prot_pos - 1) * 3) + 1
-                        dna_pos = range(dna_pos - (size * 3), dna_pos)
-                        bases, quals, depths = [], [], []
-                        base, qual, depth = 0, 0, 0
-                        for n, pos in enumerate(dna_pos):
-                            try:
-                                d = result[ctg][str(pos)]
-                                ref = d['reference'].upper()
-                                if ref in ['A', 'T', 'C', 'G']:
-                                    ref_depth = f'{d[f"{ref}_depth"]}/{d["total_depth"]}'
-                                    ref_qual = str(round(float(d[f'{ref}_quality']), 1))
+                        elif strand < 0 and q_aa != 'd':
+                            dna_pos = end - ((prot_pos - 1) * 3) + 1
+                            dna_pos = range(dna_pos - (size * 3), dna_pos)
+                            bases, quals, depths = [], [], []
+                            base, qual, depth = 0, 0, 0
+                            for n, pos in enumerate(dna_pos):
+                                try:
+                                    d = result[ctg][str(pos)]
+                                    ref = d['reference'].upper()
+                                    if ref in ['A', 'T', 'C', 'G']:
+                                        ref_depth = f'{d[f"{ref}_depth"]}/{d["total_depth"]}'
+                                        ref_qual = str(round(float(d[f'{ref}_quality']), 1))
 
-                                else:
-                                    continue
+                                    else:
+                                        continue
 
-                            except KeyError:
-                                print(f'Position {pos} in {data["qid"]} for feature {data["tid"]} with reference depth'
-                                      f' of 0!')
-                                ref = 'N'
-                                ref_depth = '0/0'
-                                ref_qual = '0'
+                                except KeyError:
+                                    print(f'Position {pos} in {data["qid"]} for feature {data["tid"]} with reference depth'
+                                          f' of 0!')
+                                    ref = 'N'
+                                    ref_depth = '0/0'
+                                    ref_qual = '0'
 
-                            if n % 3 == 0:
-                                if base != 0:
-                                    bases.append(base)
-                                    quals.append(qual)
-                                    depths.append(depth)
-                                base, qual, depth = f'p:{pos}; f:{strand}; b:{ref}', ref_qual, ref_depth
-                            else:
-                                if base == 0:
+                                if n % 3 == 0:
+                                    if base != 0:
+                                        bases.append(base)
+                                        quals.append(qual)
+                                        depths.append(depth)
                                     base, qual, depth = f'p:{pos}; f:{strand}; b:{ref}', ref_qual, ref_depth
                                 else:
-                                    base = base + ref
-                                    depth = depth + ',' + ref_depth
-                                    qual = qual + ',' + ref_qual
+                                    if base == 0:
+                                        base, qual, depth = f'p:{pos}; f:{strand}; b:{ref}', ref_qual, ref_depth
+                                    else:
+                                        base = base + ref
+                                        depth = depth + ',' + ref_depth
+                                        qual = qual + ',' + ref_qual
 
-                        if depth == 0:
-                            continue
+                            if depth == 0:
+                                continue
 
-                        bases.append(base)
-                        quals.append(qual)
-                        depths.append(depth)
-                        txt = ''
-                        for i in range(0, len(bases)):
-                            txt = txt + f'{bases[i]}; d:{depths[i]}; q:{quals[i]} | '
-                        txt = txt[:-3]
-                    else:
-                        txt = ''
-                    snp['dna_data'] = txt
+                            bases.append(base)
+                            quals.append(qual)
+                            depths.append(depth)
+                            txt = ''
+                            for i in range(0, len(bases)):
+                                txt = txt + f'{bases[i]}; d:{depths[i]}; q:{quals[i]} | '
+                            txt = txt[:-3]
+                        else:
+                            txt = ''
+                        snp['dna_data'] = txt
     return dmnd_results
