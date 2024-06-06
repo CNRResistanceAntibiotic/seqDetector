@@ -162,8 +162,8 @@ def bam_count_extract(bam_count_file, feature_name, header, output_dir, bam_file
     else:
         out_file = os.path.join(output_dir, sample + f'_{feature_name}_count')
 
+    result_data = []
     with open(bam_count_file) as count_f:
-        result_data = []
         for line in count_f:
             line = line.strip().split('\t')
             ctg = line[0]
@@ -184,7 +184,10 @@ def bam_count_extract(bam_count_file, feature_name, header, output_dir, bam_file
         # print(df)
         df.to_csv(f'{out_file}.csv', sep='\t', header=True, index=True)
         df.to_html(f'{out_file}.html', index=True)
-    return f'{out_file}.csv'
+    if result_data:
+        return f'{out_file}.csv'
+    else:
+        return ''
 
 
 def pre_main(args):
@@ -235,7 +238,10 @@ def main(bam_file, fasta_ref, position, output_dir, feature_name, force=False, m
             print("\n Error ! No stats file produced \n")
     if data:
         data_file = bam_count_extract(bam_count_file, feature_name, header, output_dir, bam_file)
-        out_file_list.append(data_file)
+        if data_file:
+            out_file_list.append(data_file)
+        else:
+            print("\n Error ! No data file produced \n")
     return out_file_list
 
 
