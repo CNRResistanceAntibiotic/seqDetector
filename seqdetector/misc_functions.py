@@ -617,7 +617,10 @@ def read_bam_count(filename, depth_pass=20, qual_pass=20, fraction_pass=0.8):
             cmt = []
             if ref in ['A', 'T', 'C', 'G']:
                 base_depth = int(row[f'{ref}_depth'])
-                allele_fraction = round(base_depth / float(total_depth), 2)
+                if float(total_depth) == 0:
+                    allele_fraction = 0
+                else:
+                    allele_fraction = round(base_depth / float(total_depth), 2)
                 base_qual = float(row[f'{ref}_quality'])
                 if base_depth < depth_pass:
                     cmt.append(f'D{position}={base_depth}')
