@@ -602,12 +602,14 @@ def extract_mutations(data):
 
 
 def read_bam_count(filename, depth_pass=20, qual_pass=20, fraction_pass=0.8):
+    print(filename)
     with open(filename) as tsv_file:
         reader = csv.DictReader(tsv_file, delimiter='\t')
         result = {}
         alarm = []
         # for n, line in enumerate(inf_f):
         for row in reader:
+            print(row)
             ctg = row['ID']
             position = row['position']
             ref = row['reference'].upper()

@@ -76,9 +76,7 @@ def bam_count_stats(bam_count_file, feature_name, header, output_dir, bam_file):
         ctgs = []
         result_stat = []
         result_data = []
-        start = 0
-        end = 0
-        base_nb = 0
+        start = end = base_nb = 0
 
         for line in count_f:
             line = line.strip().split('\t')
@@ -158,7 +156,7 @@ def bam_count_extract(bam_count_file, feature_name, header, output_dir, bam_file
 
     sample = os.path.basename(bam_file).split(".")[0]
     if feature_name == '':
-        out_file = os.path.join(output_dir, sample + f'_{"whole_genome"}_count')
+        out_file = os.path.join(output_dir, sample + '_whole_genome_count')
     else:
         out_file = os.path.join(output_dir, sample + f'_{feature_name}_count')
 
