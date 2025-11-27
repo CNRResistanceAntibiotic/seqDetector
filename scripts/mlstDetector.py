@@ -573,12 +573,8 @@ def main(args):
                 blastn_results = load_blastn_result(blastn_result_file, dna_target_file, pass_pid, pass_pcv)
                 print(f'\nNumber of detected features: {len(blastn_results)}')
 
-                print("blastn_results 1 : ", blastn_results)
-
                 # Filter the results for overlaps
                 blastn_results = overlap_filter(blastn_results, pass_overlap)
-
-                print("blastn_results 2: ", blastn_results)
 
                 print(f'Number of detected features after overlap filtering: {len(blastn_results)}')
             else:
@@ -599,14 +595,14 @@ def main(args):
 
                 # Global alignement of DNA and mutation extraction if DNA features detected
                 target_dic = load_fasta(dna_target_file)
+                print("blastn_results 1 : ", blastn_results)
                 blastn_results = dna_global_alignemnt(blastn_results, query_dic, target_dic, pass_pid, pass_pcv)
-
-                print("blastn_results 3 : ", blastn_results)
+                print("blastn_results 2 : ", blastn_results)
                 if os.path.exists(bam_file):
                     # Extaction quality of bases and sequencing depth if bam detected
                     blastn_results = dna_extract_quality_and_depth(bam_file, query_file, blastn_results, out_prefix, force)
 
-                    print("blastn_results 4: ", blastn_results)
+                    print("blastn_results 3 : ", blastn_results)
 
                 # Show the detected DNA features
                 view_dna_result(blastn_results)
