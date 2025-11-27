@@ -279,9 +279,9 @@ def identify_mlst_profile(mlst_dic, mlst_list, blastn_results, id_prefix, out_pr
             motif = re.compile('(^[A-Za-z0-9_]+)[-_.]([0-9]+$)')
             match = motif.match(tid)
             if match:
-                print("data : ", data)
                 gene, allele = match.groups()
                 if gene.lower() == item.lower():
+                    print("data : ", data)
                     if data['pid'] == 100 and data['pcv'] == 100:
                         mlst_barcode.append(allele)
                         found = 1
@@ -297,7 +297,7 @@ def identify_mlst_profile(mlst_dic, mlst_list, blastn_results, id_prefix, out_pr
                             barcode = allele
         if found == 0:
             mlst_barcode.append(barcode + '?')
-
+    print(mlst_barcode)
     if ' '.join(mlst_barcode) in mlst_dic:
         ST = mlst_dic[' '.join(mlst_barcode)]
     else:
