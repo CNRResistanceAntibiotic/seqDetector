@@ -250,13 +250,12 @@ def write_gbk(results, query_dic, out_dir, out_prefix):
 def read_mlst_scheme(mlst_scheme_file, sep='\t', mlst_size=8):
     mlst_dic = {}
     mlst_present_list = []
-    found_clonal_complex = False
-    found_species = False
+    found_clonal_complex = found_species = False
     with open(mlst_scheme_file) as in_f:
         for n, line in enumerate(in_f):
             if n == 0:
                 mlst_present_list = line.strip().split(sep)[1:mlst_size + 1]
-                #  remove alternative information
+                # remove alternative information
                 if "clonal_complex" in mlst_present_list:
                     mlst_present_list.remove("clonal_complex")
                     found_clonal_complex = True
@@ -279,11 +278,11 @@ def read_mlst_scheme(mlst_scheme_file, sep='\t', mlst_size=8):
 def identify_mlst_profile(mlst_dic, mlst_list, blastn_results, id_prefix, out_prefix):
     mlst_barcode = []
     for item in mlst_list:
-        pid = 0
-        pcv = 0
+        print("item : ", item)
+        pid = pcv = found = 0
         barcode = '0'
-        found = 0
         for data in blastn_results:
+            print("data : ", data)
             tid = data['tid']
             motif = re.compile('(^[A-Za-z0-9_]+)[-_.]([0-9]+$)')
             match = motif.match(tid)
@@ -583,10 +582,6 @@ def main(args):
 
                 blastn_results = load_blastn_result(blastn_result_file, dna_target_file, pass_pid, pass_pcv)
                 print(f'\nNumber of detected features: {len(blastn_results)}')
-
-                for element in blastn_results:
-                    if "uidA" in element:
-                        print(element)
 
                 # Filter the results for overlaps
                 blastn_results = overlap_filter(blastn_results, pass_overlap)

@@ -90,7 +90,6 @@ def overlap_filter(results, taxonomy, pass_overlap=50):
             if d['qid'] == ctg:
                 subset_results.append(d)
         print(ctg, len(subset_results), 'features -> kept:', end=' ')
-        print("")
         comparisons = list(itertools.combinations(subset_results, 2))
         # print ctg, len(subset_result.keys()), len(comparisons)
         del_list = []
@@ -238,12 +237,14 @@ def show_dna_result(blastn_results):
         print(f'DBase   : {data["tseq"]}')
         if 'warning' in data:
             print(f'Sequence warning: {data["warning"]}')
-        # else:
-        #    print 'Detected: {0}'.format(str(Seq(data['qseq']).reverse_complement()))
-        # if 'qdna' and 'tdna' in data:
-        #    print 'Final alignment:'
-        #    print 'Detected: {0}'.format(data['qdna'])
-        #    print 'Database: {0}'.format(data['tdna'])
+        """
+        else:
+            print 'Detected: {0}'.format(str(Seq(data['qseq']).reverse_complement()))
+        if 'qdna' and 'tdna' in data:
+            print 'Final alignment:'
+            print 'Detected: {0}'.format(data['qdna'])
+            print 'Database: {0}'.format(data['tdna'])
+        """
         if 'mean_qual' in data:
             print(f'Max base quality: {data["max_qual"]}\tMean base quality: {data["mean_qual"]}\tMin base quality:'
                   f' {data["min_qual"]}')

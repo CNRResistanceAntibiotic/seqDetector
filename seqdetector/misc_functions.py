@@ -609,7 +609,6 @@ def read_bam_count(filename, depth_pass=20, qual_pass=20, fraction_pass=0.8):
         alarm = []
         # for n, line in enumerate(inf_f):
         for row in reader:
-            print(row)
             ctg = row['ID']
             position = row['position']
             ref = row['reference'].upper()

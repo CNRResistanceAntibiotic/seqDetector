@@ -118,11 +118,12 @@ def bam_count_stats(bam_count_file, feature_name, header, output_dir, bam_file):
                 if base == ref:
                     ctg_ref_depth.append(int(data['count']))
                     ctg_ref_qual.append(round(float(data['avg_base_quality']), 2))
-
-        # print(start)
-        # print(end)
-        # print(base_nb)
-        # print(ctgs)
+        """
+        print(start)
+        print(end)
+        print(base_nb)
+        print(ctgs)
+        """
         if ctgs:
             d = OrderedDict([('ID', ctgs[-1]), ('start', start), ('end', end), ('size', base_nb)])
             result_data.append(d)
@@ -179,7 +180,6 @@ def bam_count_extract(bam_count_file, feature_name, header, output_dir, bam_file
             result_data.append(data)
 
         df = pd.DataFrame.from_dict(result_data)
-        # print(df)
         df.to_csv(f'{out_file}.csv', sep='\t', header=True, index=True)
         df.to_html(f'{out_file}.html', index=True)
     if result_data:
