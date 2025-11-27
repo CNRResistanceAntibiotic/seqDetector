@@ -271,6 +271,7 @@ def read_mlst_scheme(mlst_scheme_file, sep='\t', mlst_size=8):
 def identify_mlst_profile(mlst_dic, mlst_list, blastn_results, id_prefix, out_prefix):
     mlst_barcode = []
     for item in mlst_list:
+        print("item : ", item)
         pid = pcv = found = 0
         barcode = '0'
         for data in blastn_results:
@@ -278,12 +279,13 @@ def identify_mlst_profile(mlst_dic, mlst_list, blastn_results, id_prefix, out_pr
             motif = re.compile('(^[A-Za-z0-9_]+)[-_.]([0-9]+$)')
             match = motif.match(tid)
             if match:
+                print("data : ", data)
                 gene, allele = match.groups()
                 if gene.lower() == item.lower():
                     if data['pid'] == 100 and data['pcv'] == 100:
                         mlst_barcode.append(allele)
                         found = 1
-                        break
+                        continue
                     else:
                         if data['pcv'] >= pcv and data['pid'] > pid:
                             pid = data['pid']
@@ -595,14 +597,10 @@ def main(args):
 
                 # Global alignement of DNA and mutation extraction if DNA features detected
                 target_dic = load_fasta(dna_target_file)
-                print("blastn_results 1 : ", blastn_results)
                 blastn_results = dna_global_alignemnt(blastn_results, query_dic, target_dic, pass_pid, pass_pcv)
-                print("blastn_results 2 : ", blastn_results)
                 if os.path.exists(bam_file):
                     # Extaction quality of bases and sequencing depth if bam detected
                     blastn_results = dna_extract_quality_and_depth(bam_file, query_file, blastn_results, out_prefix, force)
-
-                    print("blastn_results 3 : ", blastn_results)
 
                 # Show the detected DNA features
                 view_dna_result(blastn_results)
