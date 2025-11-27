@@ -44,13 +44,8 @@ def overlap_filter(results, pass_overlap=50):
         # print ctg, len(subset_result.keys()), len(comparisons)
         del_list = []
         for data1, data2 in comparisons:
-
             if subset_results.index(data1) not in del_list and subset_results.index(data2) not in del_list:
-                qid1 = data1['qid']
-                tid1 = data1['tid']
                 pos1 = range(data1['qstart'], data1['qend'] + 1)
-                qid2 = data2['qid']
-                tid2 = data2['tid']
                 pos2 = range(data2['qstart'], data2['qend'] + 1)
                 intersection = len([x for x in pos1 if x in pos2])
                 if intersection >= pass_overlap:
@@ -60,7 +55,6 @@ def overlap_filter(results, pass_overlap=50):
                         del_list.append(subset_results.index(data2))
                     else:
                         del_list.append(subset_results.index(data1))
-
         del_list = list(set(del_list))
         del_list.sort()
         del_list.reverse()
@@ -68,7 +62,6 @@ def overlap_filter(results, pass_overlap=50):
             del subset_results[item]
         print(len(subset_results))
         filtered_results = filtered_results + subset_results
-
     return filtered_results
 
 
@@ -278,11 +271,9 @@ def read_mlst_scheme(mlst_scheme_file, sep='\t', mlst_size=8):
 def identify_mlst_profile(mlst_dic, mlst_list, blastn_results, id_prefix, out_prefix):
     mlst_barcode = []
     for item in mlst_list:
-        print("item : ", item)
         pid = pcv = found = 0
         barcode = '0'
         for data in blastn_results:
-            print("data : ", data)
             tid = data['tid']
             motif = re.compile('(^[A-Za-z0-9_]+)[-_.]([0-9]+$)')
             match = motif.match(tid)
@@ -323,13 +314,10 @@ def identify_mlst_profile(mlst_dic, mlst_list, blastn_results, id_prefix, out_pr
 
 def write_csv_html(results, mut_prefix, id_prefix, out_prefix, pass_alarm_qual=20, pass_alarm_depth=30,
                    pass_alarm_frac=0.9):
-    header = ['Function', 'DBase name', '% ident', '% cov', 'Sequence Warning',
-              'Min depth', 'Mean depth', 'Max depth',
-              'Min qual', 'Mean qual', 'Max qual',
-              'SNP', 'SUB', 'Known prot SNP', 'Known DNA SNP',
-              'DBase start', 'DBase end', 'DBase length',
-              'Query name', 'Query start', 'Query end', 'Query strand', 'Query length',
-              'Query DNA seq', 'Query prot seq', 'DBase dna seq', 'DBase prot seq']
+    header = ['Function', 'DBase name', '% ident', '% cov', 'Sequence Warning','Min depth', 'Mean depth', 'Max depth',
+              'Min qual', 'Mean qual', 'Max qual', 'SNP', 'SUB', 'Known prot SNP', 'Known DNA SNP',
+              'DBase start', 'DBase end', 'DBase length', 'Query name', 'Query start', 'Query end', 'Query strand',
+              'Query length', 'Query DNA seq', 'Query prot seq', 'DBase dna seq', 'DBase prot seq']
     records = []
     for data in results:
         if 'warning' in data:
@@ -580,11 +568,18 @@ def main(args):
                 blastn_db = make_blastn_database(dna_target_file, force)
                 blastn_result_file = run_blastn(blastn_db, query_file, pass_pid, force, 0.0001, 8, out_blastn_file)
 
+                print("blastn_result_file 1 : ", blastn_result_file)
+
                 blastn_results = load_blastn_result(blastn_result_file, dna_target_file, pass_pid, pass_pcv)
                 print(f'\nNumber of detected features: {len(blastn_results)}')
 
+                print("blastn_results 1 : ", blastn_results)
+
                 # Filter the results for overlaps
                 blastn_results = overlap_filter(blastn_results, pass_overlap)
+
+                print("blastn_results 2: ", blastn_results)
+
                 print(f'Number of detected features after overlap filtering: {len(blastn_results)}')
             else:
                 print(f"\nMLST database file {dna_target_file} not found!\n")
@@ -605,9 +600,14 @@ def main(args):
                 # Global alignement of DNA and mutation extraction if DNA features detected
                 target_dic = load_fasta(dna_target_file)
                 blastn_results = dna_global_alignemnt(blastn_results, query_dic, target_dic, pass_pid, pass_pcv)
+
+                print("blastn_results 3 : ", blastn_results)
                 if os.path.exists(bam_file):
                     # Extaction quality of bases and sequencing depth if bam detected
                     blastn_results = dna_extract_quality_and_depth(bam_file, query_file, blastn_results, out_prefix, force)
+
+                    print("blastn_results 4: ", blastn_results)
+
                 # Show the detected DNA features
                 view_dna_result(blastn_results)
 
