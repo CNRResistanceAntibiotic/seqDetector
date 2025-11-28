@@ -271,7 +271,6 @@ def read_mlst_scheme(mlst_scheme_file, sep='\t', mlst_size=8):
 def identify_mlst_profile(mlst_dic, mlst_list, blastn_results, id_prefix, out_prefix):
     mlst_barcode = []
     for item in mlst_list:
-        print("item : ", item)
         pid = pcv = found = 0
         barcode = '0'
         allele_l = []
@@ -282,7 +281,6 @@ def identify_mlst_profile(mlst_dic, mlst_list, blastn_results, id_prefix, out_pr
             if match:
                 gene, allele = match.groups()
                 if gene.lower() == item.lower():
-                    print("data : ", data)
                     if data['pid'] == 100 and data['pcv'] == 100:
                         #mlst_barcode.append(allele)
                         allele_l.append(allele)
@@ -301,7 +299,7 @@ def identify_mlst_profile(mlst_dic, mlst_list, blastn_results, id_prefix, out_pr
             mlst_barcode.append(barcode + '?')
         else:
             mlst_barcode.append("||".join(allele_l))
-    print(mlst_barcode)
+
     if ' '.join(mlst_barcode) in mlst_dic:
         ST = mlst_dic[' '.join(mlst_barcode)]
     else:
