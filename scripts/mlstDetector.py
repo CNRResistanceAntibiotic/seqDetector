@@ -274,6 +274,7 @@ def identify_mlst_profile(mlst_dic, mlst_list, blastn_results, id_prefix, out_pr
         print("item : ", item)
         pid = pcv = found = 0
         barcode = '0'
+        allele_l = []
         for data in blastn_results:
             tid = data['tid']
             motif = re.compile('(^[A-Za-z0-9_]+)[-_.]([0-9]+$)')
@@ -283,7 +284,8 @@ def identify_mlst_profile(mlst_dic, mlst_list, blastn_results, id_prefix, out_pr
                 if gene.lower() == item.lower():
                     print("data : ", data)
                     if data['pid'] == 100 and data['pcv'] == 100:
-                        mlst_barcode.append(allele)
+                        #mlst_barcode.append(allele)
+                        allele_l.append(allele)
                         found = 1
                         continue
                     else:
@@ -297,6 +299,8 @@ def identify_mlst_profile(mlst_dic, mlst_list, blastn_results, id_prefix, out_pr
                             barcode = allele
         if found == 0:
             mlst_barcode.append(barcode + '?')
+        else:
+            mlst_barcode.append("||".join(allele_l))
     print(mlst_barcode)
     if ' '.join(mlst_barcode) in mlst_dic:
         ST = mlst_dic[' '.join(mlst_barcode)]
