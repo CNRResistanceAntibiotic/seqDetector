@@ -283,7 +283,7 @@ def identify_mlst_profile(mlst_dic, mlst_list, blastn_results, id_prefix, out_pr
                 if gene.lower() == item.lower():
                     if data['pid'] == 100 and data['pcv'] == 100:
                         #mlst_barcode.append(allele)
-                        allele_l.append(int(allele))
+                        allele_l.append(allele)
                         found = 1
                         continue
                     else:
