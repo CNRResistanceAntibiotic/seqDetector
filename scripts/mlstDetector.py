@@ -1,7 +1,6 @@
 #!/usr/bin/python3
 import os, glob, re, itertools, argparse
 import sys
-import numpy as np
 from collections import OrderedDict
 from Bio import SeqIO
 from Bio.Seq import Seq
@@ -298,7 +297,7 @@ def identify_mlst_profile(mlst_dic, mlst_list, blastn_results, id_prefix, out_pr
         if found == 0:
             mlst_barcode.append(barcode + '?')
         else:
-            allele_l = sorted(allele_l)
+            allele_l = sorted(allele_l, key=natural_key)
             mlst_barcode.append("||".join(allele_l))
 
     if ' '.join(mlst_barcode) in mlst_dic:
@@ -315,6 +314,10 @@ def identify_mlst_profile(mlst_dic, mlst_list, blastn_results, id_prefix, out_pr
     df.to_csv(f'{id_prefix}_{out_prefix}.csv', sep='\t', index=False)
     df.to_html(f'{id_prefix}_{out_prefix}.html')
     return blastn_results
+
+
+def natural_key(s):
+    return [int(x) if x.isdigit() else x.lower() for x in re.split(r"(\d+)", s)]
 
 
 def write_csv_html(results, mut_prefix, id_prefix, out_prefix, pass_alarm_qual=20, pass_alarm_depth=30,
