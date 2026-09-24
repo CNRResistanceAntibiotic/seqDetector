@@ -70,6 +70,56 @@ def overlap_filter(results, pass_overlap=50):
     return filtered_results
 
 
+def overlap_filter(results, pass_overlap=50):
+    filtered_results = []
+
+    # Regroupement des résultats par contig
+    results_by_ctg = {}
+
+    for d in results:
+        results_by_ctg.setdefault(d['qid'], []).append(d)
+
+    ctgs = sorted(results_by_ctg)
+
+    print("len(ctgs)", len(ctgs))
+    print("len(results)", len(results))
+
+    for ctg in ctgs:
+        print("ctg", ctg)
+        subset_results = results_by_ctg[ctg]
+        print(ctg, len(subset_results),'features -> kept:',end=' ' )
+        del_list = set()
+        for i, data1 in enumerate(subset_results):
+            if i in del_list:
+                continue
+            for j in range(i + 1, len(subset_results)):
+                if j in del_list:
+                    continue
+                data2 = subset_results[j]
+                # Calcul direct de l'intersection
+                start = max(data1['qstart'], data2['qstart'])
+                end = min(data1['qend'], data2['qend'])
+                intersection = max(0, end - start + 1)
+                if intersection >= pass_overlap:
+                    score1 = (data1['nid'] - data1['gap']) / float(data1['tlen'])
+                    score2 = (data2['nid'] - data2['gap']) / float(data2['tlen'])
+                    if score1 >= score2:
+                        del_list.add(j)
+                    else:
+                        del_list.add(i)
+                        break
+
+        subset_results = [
+            d for i, d in enumerate(subset_results)
+            if i not in del_list
+        ]
+
+        print(len(subset_results))
+        filtered_results.extend(subset_results)
+
+    return filtered_results
+
+
 def view_dna_result(blastn_results):
     for data in blastn_results:
         print(f'\nTarget: {data["tid"]}\ttarget length: {data["tlen"]}\tstart: {data["tstart"]}\tend: {data["tend"]}')
