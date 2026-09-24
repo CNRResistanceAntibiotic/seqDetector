@@ -32,47 +32,6 @@ def load_set_file(set_file, sep='\t'):
 def overlap_filter(results, pass_overlap=50):
     filtered_results = []
 
-    #ctgs = list(set([d['qid'] for d in results]))
-    ctgs = list({d['qid'] for d in results})
-    print("end sort contigs")
-    ctgs.sort()
-    print("len(ctgs) ",len(ctgs))
-    print("len(results) ", len(results))
-    for ctg in ctgs:
-        print("ctg ",ctg)
-        subset_results = []
-        for d in results:
-            if d['qid'] == ctg:
-                subset_results.append(d)
-        print(ctg, len(subset_results), 'features -> kept:', end=' ')
-        comparisons = list(itertools.combinations(subset_results, 2))
-        # print ctg, len(subset_result.keys()), len(comparisons)
-        del_list = []
-        for data1, data2 in comparisons:
-            if subset_results.index(data1) not in del_list and subset_results.index(data2) not in del_list:
-                pos1 = range(data1['qstart'], data1['qend'] + 1)
-                pos2 = range(data2['qstart'], data2['qend'] + 1)
-                intersection = len([x for x in pos1 if x in pos2])
-                if intersection >= pass_overlap:
-                    score1 = (data1['nid'] - data1['gap']) / float(data1['tlen'])
-                    score2 = (data2['nid'] - data2['gap']) / float(data2['tlen'])
-                    if score1 >= score2:
-                        del_list.append(subset_results.index(data2))
-                    else:
-                        del_list.append(subset_results.index(data1))
-        del_list = list(set(del_list))
-        del_list.sort()
-        del_list.reverse()
-        for item in del_list:
-            del subset_results[item]
-        print(len(subset_results))
-        filtered_results = filtered_results + subset_results
-    return filtered_results
-
-
-def overlap_filter(results, pass_overlap=50):
-    filtered_results = []
-
     # Regroupement des résultats par contig
     results_by_ctg = {}
 
