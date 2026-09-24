@@ -31,7 +31,10 @@ def load_set_file(set_file, sep='\t'):
 
 def overlap_filter(results, pass_overlap=50):
     filtered_results = []
-    ctgs = list(set([d['qid'] for d in results]))
+
+    #ctgs = list(set([d['qid'] for d in results]))
+    ctgs = list({d['qid'] for d in results})
+    print("end sort contigs")
     ctgs.sort()
     for ctg in ctgs:
         subset_results = []
@@ -224,8 +227,7 @@ def write_gbk(results, query_dic, out_dir, out_prefix):
             else:
                 # feature.qualifiers = {'locus_tag':'{}_{}'.format(outprefix, n), 'product':data['tid'].split('::')[0],
                 #                   'note':description(data)}
-                feature.qualifiers = OrderedDict([('product', data['tid'].split('::')[0]),
-                                                  ('note', description(data))])
+                feature.qualifiers = OrderedDict([('product', data['tid'].split('::')[0]), ('note', description(data))])
             rec.features.append(feature)
 
         rec.features = sorted(rec.features, key=lambda feature: feature.location.start)
@@ -304,10 +306,10 @@ def identify_mlst_profile(mlst_dic, mlst_list, blastn_results, id_prefix, out_pr
         ST = mlst_dic[' '.join(mlst_barcode)]
     else:
         ST = '?'
-
+    #
     zipped = zip(mlst_list, mlst_barcode)
     zip_list = list(map(list, zipped))
-
+    #
     result = OrderedDict([('MLST_name', out_prefix), ('ST', ST)] + zip_list)
     df = pd.DataFrame(result, index=[out_prefix])
     print(df)

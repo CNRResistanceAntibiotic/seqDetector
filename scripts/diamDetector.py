@@ -649,15 +649,9 @@ def write_gbk(results, query_dic, out_dir, out_prefix):
                                      type='misc_feature', qualifiers={})
 
             if 'qprot' in data:
-                # feature.qualifiers = {'locus_tag':'{0}_{1}'.format(out_prefix, n), 'product':data['tid'].
-                # split('::')[0],
-                #                  'note':description(data), 'translation':data['qprot']}
                 feature.qualifiers = OrderedDict([('product', data['tid'].split('::')[0]),
                                                   ('note', description(data)), ('translation', data['qprot'])])
             else:
-                # feature.qualifiers = {'locus_tag':'{0}_{1}'.format(out_prefix, n),
-                # 'product':data['tid'].split('::')[0],
-                #                   'note':description(data)}
                 feature.qualifiers = OrderedDict([('product', data['tid'].split('::')[0]),
                                                   ('note', description(data))])
             rec.features.append(feature)
@@ -774,6 +768,10 @@ def main(args):
         sample_name = os.path.splitext(os.path.basename(query_file))[0]
         # Set bam file
         bam_file = os.path.splitext(query_file)[0] + '.bam'
+        if os.path.exists(bam_file):
+            print(f"  BAM file exist ! \n")
+        else:
+            print(f"  BAM file not exist ({bam_file}) ! No depth information will be provided \n")
         # Set taxonomy for taxonomy-based filtering
         taxonomy = sample_dic[sample_name]
         title = f"~~~~  {n + 1}/{len(file_list)} sample: {sample_name} species: {taxonomy}  ~~~~"
