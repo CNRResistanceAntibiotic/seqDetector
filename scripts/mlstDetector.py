@@ -36,7 +36,10 @@ def overlap_filter(results, pass_overlap=50):
     ctgs = list({d['qid'] for d in results})
     print("end sort contigs")
     ctgs.sort()
+    print("len(ctgs) ",len(ctgs))
+    print("len(results) ", len(results))
     for ctg in ctgs:
+        print("ctg ",ctg)
         subset_results = []
         for d in results:
             if d['qid'] == ctg:
